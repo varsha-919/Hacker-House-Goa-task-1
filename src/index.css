@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-ink text-cream font-body;
+    background-color: #0E2A1F;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 210, 63, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 45, 123, 0.10), transparent);
+    min-height: 100vh;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  input, textarea {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid #FFD23F;
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           bg-sun text-ink font-semibold tracking-wide
+           px-6 py-3.5 text-base
+           transition-transform duration-150 ease-out
+           hover:scale-[1.02] active:scale-[0.98]
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    box-shadow: 0 6px 0 0 #0E2A1F, 0 10px 24px -8px rgba(0, 0, 0, 0.4);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           bg-cream text-ink font-semibold tracking-wide
+           px-6 py-3.5 text-base
+           transition-transform duration-150 ease-out
+           hover:scale-[1.02] active:scale-[0.98]
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    box-shadow: 0 6px 0 0 #0E2A1F, 0 10px 24px -8px rgba(0, 0, 0, 0.4);
+  }
+
+  .btn-pink {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           bg-pink text-cream font-semibold tracking-wide
+           px-6 py-3.5 text-base
+           transition-transform duration-150 ease-out
+           hover:scale-[1.02] active:scale-[0.98]
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    box-shadow: 0 6px 0 0 #0E2A1F, 0 10px 24px -8px rgba(0, 0, 0, 0.4);
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           border border-cream/30 text-cream
+           px-5 py-3 text-sm font-medium
+           transition-colors hover:bg-cream/10;
+  }
+
+  .input-field {
+    @apply w-full bg-ink-900/60 border border-cream/20
+           text-cream placeholder-cream/40
+           rounded-xl px-4 py-3.5 text-base
+           transition-colors
+           focus:border-sun focus:bg-ink-900/80;
+  }
+
+  .label-field {
+    @apply block text-[11px] font-mono font-bold uppercase
+           tracking-super text-cream/70 mb-2;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full
+           border border-cream/20 px-3 py-1
+           text-[10px] font-mono uppercase tracking-super;
+  }
+
+  .display-xl {
+    font-family: 'Anton', Impact, sans-serif;
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+  }
+
+  .display-xl-tight {
+    font-family: 'Anton', Impact, sans-serif;
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+
+  .editorial {
+    font-family: 'Fraunces', Georgia, serif;
+  }
+
+  .stripes {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(245, 235, 215, 0.08) 0,
+      rgba(245, 235, 215, 0.08) 2px,
+      transparent 2px,
+      transparent 16px
+    );
+  }
+
+  .grid-paper {
+    background-image:
+      linear-gradient(rgba(245, 235, 215, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245, 235, 215, 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+}
