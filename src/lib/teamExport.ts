@@ -1,19 +1,18 @@
 // Team / combined-frame renderer.
 //
-// Cohesive group composition for 1–3 builders in one 1080×1350 poster.
-// Unlike the single-builder poster, this is ONE shared illustrated
-// scene rather than three duplicated cards:
-//
+// Composition (badge-style — 3 photo circles sit ABOVE the rectangular
+// ID card, overlapping its top edge like a profile-photo badge):
 //   1. Header band     (200) – HH brand, dates, ticket stub
-//   2. Goa scene       (160) – mountain ridge + palms + sun behind
-//   3. Crew zone       (470) – 3 portraits in a unified row with
-//                              shared palm fronds, sun, scooter, route
-//                              dotted across the whole row
-//   4. Name strip      (180) – wavy top edge, three member names with
-//                              ⚡ accents, shared stack line per member
-//   5. Class strip     (160) – pink band, three builder class titles
-//                              side-by-side
-//   6. Footer          (90)  – same dense postcard footer as single
+//   2. Goa scene       (160) – mountain ridge + palms + sun
+//   3. Badge row       (280) – 3 portrait circles in a row, mostly
+//                              above the card, dipping ~30% into the
+//                              top edge
+//   4. Card body       (620) – the rectangular "TEAM ID CARD":
+//                              – palm fronds + sun + scooter + route
+//                              – wavy top edge so circles overlap
+//                              – 3 names with ⚡ accents (name strip)
+//                              – pink class band with 3 builder titles
+//   5. Footer          (90)  – same dense postcard footer as single
 //
 // All coordinates/colors/fonts come from posterLayout.ts so the team
 // poster reads as one cohesive illustration in the same visual
@@ -42,19 +41,19 @@ export type TeamPosterData = {
   members: TeamMember[]; // 1..3
 };
 
-// Cohesive layout band heights (sum = 1260, leaves 90 for footer)
+// Cohesive layout band heights (sum = 1350 = CARD_H)
 const HEADER_H = 200;
 const GOA_H = 160;
-const CREW_TOP = HEADER_H + GOA_H; // 360
-const CREW_H = 470;
-const CREW_BOTTOM = CREW_TOP + CREW_H; // 830
+const BADGE_ROW_H = 280;            // visual band for the 3 circles
+const PHOTO_R = 130;                // base photo radius in poster units
+// The rectangular "TEAM ID CARD" container.
+const CARD_TOP = HEADER_H + GOA_H + BADGE_ROW_H; // 200 + 160 + 280 = 640
 const NAME_H = 180;
-const NAME_TOP = CREW_BOTTOM; // 830
+const NAME_TOP = CARD_TOP;          // 640 — name strip starts at card top
 const CLASS_H = 160;
-const CLASS_TOP = NAME_TOP + NAME_H; // 1010
-const FOOTER_H = CARD_H - (CLASS_TOP + CLASS_H); // 1350 - 1170 = 180 -> 90
-
-const FOOTER_TOP = CARD_H - FOOTER_H;
+const CLASS_TOP = NAME_TOP + NAME_H; // 820
+const FOOTER_H = 90;
+const FOOTER_TOP = CARD_H - FOOTER_H; // 1260
 
 export function renderTeamPosterToCanvas(data: TeamPosterData): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
@@ -66,7 +65,8 @@ export function renderTeamPosterToCanvas(data: TeamPosterData): HTMLCanvasElemen
   drawBackground(ctx);
   drawHeader(ctx, data);
   drawGoaScene(ctx);
-  drawCrew(ctx, data);
+  drawCardBody(ctx, data);
+  drawBadgeRow(ctx, data);
   drawNameStrip(ctx, data);
   drawClassStrip(ctx, data);
   drawFooter(ctx);
@@ -313,47 +313,44 @@ function drawGoaScene(ctx: CanvasRenderingContext2D) {
 }
 
 // ============================================================================
-// crew zone (470) — 3 portraits in a unified row
+// card body (CARD_TOP..CARD_TOP+CARD_BODY_H) — the rectangular
+// "TEAM ID CARD" container. Painted as a cream block with palm fronds,
+// sun, scooter, route, and postmark decorations. The badge row circles
+// paint on top of this base.
 // ============================================================================
 
-function drawCrew(ctx: CanvasRenderingContext2D, data: TeamPosterData) {
-  const r = { x: 0, y: CREW_TOP, w: CARD_W, h: CREW_H };
-
+function drawCardBody(ctx: CanvasRenderingContext2D, _data: TeamPosterData) {
   // Cream base
   ctx.fillStyle = COLORS.cream;
-  ctx.fillRect(r.x, r.y, r.w, r.h);
+  ctx.fillRect(0, CARD_TOP, CARD_W, CARD_H - CARD_TOP - FOOTER_H);
 
-  // Decorative wave under the crew
-  drawWavePattern(ctx, r.x + 20, r.y + r.h - 90, r.w - 40, 24, COLORS.pink);
+  // Palm fronds at the top corners of the card
+  drawPalm(ctx, 80, CARD_TOP + 80, 130, COLORS.stamp, 1, true);
+  drawPalm(ctx, CARD_W - 80, CARD_TOP + 80, 130, COLORS.stamp, 1);
 
-  // Shared sun upper-right (crosses into goa band)
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(0, CREW_TOP - 30, CARD_W, 230);
-  ctx.clip();
-  drawSun(ctx, CARD_W - 200, CREW_TOP + 60, 70, COLORS.sun, COLORS.sunDeep);
-  ctx.restore();
+  // Sun in upper-right of the card
+  drawSun(ctx, CARD_W - 160, CARD_TOP + 140, 56, COLORS.sun, COLORS.sunDeep);
 
-  // Shared palm fronds at the top corners (cross-region decoration)
-  drawPalm(ctx, 60, CREW_TOP + 90, 130, COLORS.stamp, 1);
-  drawPalm(ctx, CARD_W - 60, CREW_TOP + 90, 130, COLORS.stamp, 1);
+  // Dotted travel route across the card body
+  const routeY = CARD_TOP + 220;
+  drawRouteDots(ctx, 30, routeY, CARD_W - 30, routeY, COLORS.pink, 8, 4);
+  drawText(ctx, {
+    text: 'ROUTE · BAGA → ANJUNA → PALOLEM',
+    x: CARD_W / 2,
+    y: routeY - 18,
+    font: `700 10px ${FONT.mono}`,
+    color: COLORS.pink,
+    align: 'center',
+    baseline: 'middle',
+    letterSpacing: 0.3,
+  });
+  drawScooter(ctx, CARD_W * 0.55 - 30, routeY, 1.4, COLORS.ink);
 
-  // Three portrait slots — distributed evenly
-  const slots = [0, 1, 2].map((i) => data.members[i] ?? null);
-  const slotW = CARD_W / 3;
-  const cy = CREW_TOP + 230;
-  const r2 = 150;
-
-  for (let i = 0; i < 3; i++) {
-    const cx = slotW * i + slotW / 2;
-    drawMemberSlot(ctx, slots[i], cx, cy, r2, data.members[i]?.builderNumber ?? 28);
-  }
-
-  // Shared postmark label across the bottom
+  // Shared postmark label near the bottom of the name strip
   drawText(ctx, {
     text: '·  ANJUNA · GOA  ·',
     x: CARD_W / 2,
-    y: CREW_BOTTOM - 26,
+    y: CLASS_TOP - 50,
     font: `700 14px ${FONT.mono}`,
     color: COLORS.pink,
     align: 'center',
@@ -363,13 +360,33 @@ function drawCrew(ctx: CanvasRenderingContext2D, data: TeamPosterData) {
   drawText(ctx, {
     text: 'CURRENTLY SHIPPING TOGETHER  ·  HH/GOA/26',
     x: CARD_W / 2,
-    y: CREW_BOTTOM - 8,
+    y: CLASS_TOP - 28,
     font: `700 10px ${FONT.mono}`,
     color: COLORS.stamp,
     align: 'center',
     baseline: 'middle',
     letterSpacing: 0.26,
   });
+}
+
+// ============================================================================
+// badge row — 3 photo circles sitting mostly above the card top edge
+// ============================================================================
+
+function drawBadgeRow(ctx: CanvasRenderingContext2D, data: TeamPosterData) {
+  const slots = [0, 1, 2].map((i) => data.members[i] ?? null);
+  const slotW = CARD_W / 3;
+  // cy is the circle's center, measured in absolute poster coords.
+  // Negative offset from CARD_TOP lifts the circle's center above the
+  // card's top edge so most of the disc sits above the card and only
+  // ~30% dips in (profile-badge silhouette).
+  const cy = CARD_TOP - PHOTO_R + 4 + 12; // ≈ 526 — circle bottom ≈ +18 inside card
+  const r = PHOTO_R;
+
+  for (let i = 0; i < 3; i++) {
+    const cx = slotW * i + slotW / 2;
+    drawMemberSlot(ctx, slots[i], cx, cy, r, data.members[i]?.builderNumber ?? 28);
+  }
 }
 
 function drawMemberSlot(
@@ -380,16 +397,18 @@ function drawMemberSlot(
   r: number,
   builderNo: number,
 ) {
-  // Cream postage plate behind (rotated)
-  const plateW = 320;
-  const plateH = 240;
+  // Cream postage plate behind (rotated, subtle backing)
+  const plateW = 280;
+  const plateH = 210;
   ctx.save();
   ctx.translate(cx, cy - 10);
   ctx.rotate(-0.04);
   ctx.fillStyle = COLORS.pink;
+  ctx.globalAlpha = 0.95;
   ctx.fillRect(-plateW / 2, -plateH / 2, plateW, plateH);
   ctx.fillStyle = COLORS.cream;
-  ctx.fillRect(-plateW / 2 + 12, -plateH / 2 + 12, plateW - 24, plateH - 24);
+  ctx.fillRect(-plateW / 2 + 10, -plateH / 2 + 10, plateW - 20, plateH - 20);
+  ctx.globalAlpha = 1;
   ctx.restore();
 
   // Sun-yellow ring
@@ -437,18 +456,18 @@ function drawMemberSlot(
   ctx.arc(cx, cy, r + 18, 0, Math.PI * 2);
   ctx.stroke();
 
-  // ★ tick on top
-  drawStar(ctx, cx, cy - r - 18, 10, COLORS.pink);
+  // ★ tick on the photo (sits on the upper-left of the disc as a sticker)
+  drawStar(ctx, cx, cy - r * 0.55, 10, COLORS.pink);
 
-  // BUILDER No. stamp above
+  // BUILDER No. stamp on the photo (sits on the lower-right as a sticker)
   drawRoundStampLocal(ctx, {
-    cx,
-    cy: cy - r - 50,
-    r: 30,
+    cx: cx + r * 0.55,
+    cy: cy + r * 0.55,
+    r: 26,
     color: COLORS.ink,
     text: 'BUILDER',
     sub: `No. ${String(builderNo).padStart(3, '0')}`,
-    subFont: 13,
+    subFont: 11,
   });
 }
 
@@ -457,7 +476,9 @@ function drawMemberSlot(
 // ============================================================================
 
 function drawNameStrip(ctx: CanvasRenderingContext2D, data: TeamPosterData) {
-  // Cream block with wavy top edge
+  // Cream block with wavy top edge. The block fills from NAME_TOP
+  // down to CLASS_TOP (the bottom of the name strip). The wavy top
+  // edge lets the photo circles overlap cleanly.
   ctx.fillStyle = COLORS.cream;
   ctx.save();
   ctx.beginPath();
@@ -467,8 +488,8 @@ function drawNameStrip(ctx: CanvasRenderingContext2D, data: TeamPosterData) {
     const yy = wavyY + 18 * Math.sin((x / 64) * Math.PI * 2);
     ctx.lineTo(x, yy);
   }
-  ctx.lineTo(CARD_W, CARD_H);
-  ctx.lineTo(0, CARD_H);
+  ctx.lineTo(CARD_W, CLASS_TOP);
+  ctx.lineTo(0, CLASS_TOP);
   ctx.closePath();
   ctx.fill();
   ctx.restore();
@@ -723,8 +744,13 @@ function drawPalm(
   height: number,
   color: string,
   scale: number = 1,
+  mirrored: boolean = false,
 ) {
   ctx.save();
+  if (mirrored) {
+    ctx.translate(2 * baseX, 0);
+    ctx.scale(-1, 1);
+  }
   ctx.fillStyle = color;
   ctx.strokeStyle = color;
   ctx.lineCap = 'round';

@@ -1,3 +1,4 @@
+
 // Hacker House Goa 2026 — Builder ID Generator.
 //
 // Flow:
@@ -9,11 +10,11 @@
 //      (max 3 total) and produce a combined team poster.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Header } from './components/Header';
+import { TopBar } from './components/TopBar';
+import { LandingPage } from './components/LandingPage';
 import { PhotoUploader } from './components/PhotoUploader';
 import { PhotoEditor } from './components/PhotoEditor';
-import { BuilderIDPreview } from './components/BuilderIDPreview';
-import { TeamPreview, type TeamMemberInput } from './components/TeamPreview';
+import { FramePreviewHost } from './components/FramePreviewHost';
 import { DEFAULT_ADJUST, loadImageFromFile, type LoadedImage, type CropAdjust } from './lib/image';
 import {
   renderBuilderIDToCanvas,
@@ -22,6 +23,7 @@ import {
   sanitizeFilename,
 } from './lib/export';
 import { renderTeamPosterToCanvas } from './lib/teamExport';
+import type { TeamMember as TeamMemberInput } from './lib/teamExport';
 import { CARD_W, CARD_H } from './lib/posterLayout';
 import { SHARE_TEXT, openXShare, isShareHosted, uploadGeneratedImage, buildShareLink } from './lib/share';
 import { pickTitleVariant, allTitlesForInput } from './lib/builderTitles';
@@ -68,7 +70,7 @@ function Field({
         autoComplete="off"
         spellCheck={false}
       />
-      {hint && <div className="text-[11px] text-cream/40 mt-1.5 font-mono uppercase tracking-super">{hint}</div>}
+      {hint && <div className="text-[11px] text-ink/40 mt-1.5 font-mono uppercase tracking-super">{hint}</div>}
     </label>
   );
 }
@@ -78,13 +80,58 @@ export default function App() {
   const [loadingImage, setLoadingImage] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
+  // The HTMLCanvasElement that was rasterized for the most recent
+  // successful generate. Same canvas that produced generatedUrl via
+  // canvasToPngDataUrl — FramePreviewHost feeds it into the 3D frame
+  // card as a CanvasTexture so the on-screen card and the downloaded
+  // PNG are byte-identical.
+  const [generatedCanvas, setGeneratedCanvas] = useState<HTMLCanvasElement | null>(null);
   const [generatedKind, setGeneratedKind] = useState<'single' | 'team'>('single');
   const [error, setError] = useState<string | null>(null);
   const [uploadingShare, setUploadingShare] = useState(false);
   const [step, setStep] = useState<Step>('input');
   const [teamName, setTeamName] = useState('BUILDER CREW');
 
-  const previewRef = useRef<HTMLDivElement>(null);
+  // Hash-based routing: '/' or '#' shows the landing page; '#generate'
+  // shows the actual generator. No new router dependency — the existing
+  // bundle is single-page with a hash-routed view switch.
+  const [view, setView] = useState<'home' | 'generate'>(() => {
+    if (typeof window === 'undefined') return 'home';
+    return window.location.hash === '#generate' ? 'generate' : 'home';
+  });
+
+  useEffect(() => {
+    const sync = () => {
+      const next = window.location.hash === '#generate' ? 'generate' : 'home';
+      setView(next);
+      if (next === 'generate') {
+        // Smooth-scroll the user to the generator block on navigation.
+        requestAnimationFrame(() => {
+          const el = document.getElementById('generator-root');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+    window.addEventListener('hashchange', sync);
+    // Run once on mount in case the initial hash needs scroll restoration.
+    sync();
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
+
+  const goGenerate = useCallback(() => {
+    window.location.hash = '#generate';
+  }, []);
+
+  const goHome = useCallback(() => {
+    // Strip the hash without leaving a '#' behind.
+    if (window.location.hash) {
+      window.location.hash = '';
+    } else {
+      setView('home');
+    }
+  }, []);
 
   // Derived: the active builder (always the first slot while in input step)
   const active = slots[0];
@@ -232,6 +279,7 @@ export default function App() {
         });
         const dataUrl = canvasToPngDataUrl(canvas);
         setGeneratedUrl(dataUrl);
+        setGeneratedCanvas(canvas);
         setGeneratedKind('single');
       } else {
         const members: TeamMemberInput[] = slots.map((s) => ({
@@ -247,6 +295,7 @@ export default function App() {
         });
         const dataUrl = canvasToPngDataUrl(canvas);
         setGeneratedUrl(dataUrl);
+        setGeneratedCanvas(canvas);
         setGeneratedKind('team');
       }
       setStep('generated');
@@ -293,6 +342,7 @@ export default function App() {
     setSlots([emptySlot()]);
     setTeamName('BUILDER CREW');
     setGeneratedUrl(null);
+    setGeneratedCanvas(null);
     setError(null);
     setStep('input');
   }, []);
@@ -307,31 +357,71 @@ export default function App() {
 
   // ------------ render ------------
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
+  // Landing page is its own page — no header, no preview, no form.
+  // The existing generator lives below.
+  if (view === 'home') {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <TopBar onHome={goHome} />
+        <LandingPage onGenerate={goGenerate} />
+      </div>
+    );
+  }
 
-      <main className="flex-1 px-4 sm:px-6 lg:px-8 pb-12">
+  return (
+    <div className="min-h-screen flex flex-col bg-cream">
+      <TopBar onHome={goHome} />
+
+      <main id="generator-root" className="flex-1 px-4 sm:px-6 lg:px-8 pb-12 bg-cream">
         <div className="mx-auto max-w-6xl pt-2 sm:pt-4">
           {step === 'input' && (
             <section className="mb-5 sm:mb-7">
               <div className="flex items-center gap-2 mb-3">
-                <span className="pill text-cream/80 border-cream/20">
+                <span className="pill text-ink/80 border-ink/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-pink" />
                   HACKER HOUSE · GOA 2026
                 </span>
+                <button
+                  type="button"
+                  onClick={goHome}
+                  className="ml-auto text-[11px] font-mono uppercase tracking-super text-ink/60 hover:text-pink transition-colors"
+                >
+                  ← Back to hype
+                </button>
               </div>
-              <h1 className="display-xl text-cream text-[44px] leading-[0.92] sm:text-7xl md:text-[88px]">
+              <h1
+                className="huge-title text-ink"
+                style={{
+                  fontSize: 'clamp(40px, 9vw, 110px)',
+                  textShadow: '3px 3px 0 #FFD23F, 7px 7px 0 rgba(14,42,31,0.18)',
+                }}
+              >
                 BUILD YOUR
                 <br />
-                <span className="text-sun">BUILDER ID.</span>
+                <span style={{ color: '#0E2A1F' }}>BUILDER ID.</span>
               </h1>
-              <p className="mt-4 text-cream/70 text-base sm:text-lg max-w-2xl leading-relaxed">
+              <p className="mt-4 text-ink/80 text-base sm:text-lg max-w-2xl leading-relaxed">
                 Upload your photo, tell us what you build, and we'll turn it into your
                 Hacker House Goa 2026 identity. Bring up to two teammates and frame the
                 whole crew.
               </p>
             </section>
+          )}
+
+          {step === 'generated' && (
+            <div className="mb-5 sm:mb-7 flex items-center gap-2">
+              <span className="pill text-ink/80 border-ink/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-pink" />
+                {generatedKind === 'team' ? 'CREW FRAME READY' : 'BUILDER ID READY'}
+              </span>
+              <button
+                type="button"
+                onClick={goHome}
+                className="ml-auto text-[11px] font-mono uppercase tracking-super text-ink/60 hover:text-pink transition-colors"
+              >
+                ← Back to hype
+              </button>
+            </div>
           )}
 
           <div
@@ -344,8 +434,8 @@ export default function App() {
             <div className={step === 'generated' ? 'lg:col-span-5 order-2 lg:order-1' : 'lg:order-1'}>
               {step === 'input' && (
                 <div className="space-y-5">
-                  <div className="rounded-2xl border border-cream/15 bg-ink-900/40 p-5">
-                    <div className="text-[11px] font-mono font-bold uppercase tracking-super text-cream/60 mb-3">
+                  <div className="rounded-2xl border-2 border-ink/15 bg-cream-50 p-5">
+                    <div className="text-[11px] font-mono font-bold uppercase tracking-super text-ink/70 mb-3">
                       01 · Your photo
                     </div>
                     {!active.loaded ? (
@@ -356,7 +446,7 @@ export default function App() {
                       />
                     ) : (
                       <div className="space-y-3">
-                        <div className="relative rounded-xl overflow-hidden border border-cream/20">
+                        <div className="relative rounded-xl overflow-hidden border-2 border-ink/30">
                           <img
                             src={active.loaded.image.src}
                             alt="Uploaded preview"
@@ -365,7 +455,7 @@ export default function App() {
                           <button
                             type="button"
                             onClick={handleReset}
-                            className="absolute top-2 right-2 px-3 py-1.5 rounded-full bg-ink/90 text-cream text-[11px] font-mono uppercase tracking-super border border-cream/20 hover:bg-ink"
+                            className="absolute top-2 right-2 px-3 py-1.5 rounded-full bg-cream text-ink text-[11px] font-mono uppercase tracking-super border-2 border-ink hover:bg-sun"
                           >
                             ↻ Start over
                           </button>
@@ -379,8 +469,8 @@ export default function App() {
                     )}
                   </div>
 
-                  <div className="rounded-2xl border border-cream/15 bg-ink-900/40 p-5">
-                    <div className="text-[11px] font-mono font-bold uppercase tracking-super text-cream/60 mb-3">
+                  <div className="rounded-2xl border-2 border-ink/15 bg-cream-50 p-5">
+                    <div className="text-[11px] font-mono font-bold uppercase tracking-super text-ink/70 mb-3">
                       02 · Your details
                     </div>
                     <div className="space-y-4">
@@ -402,8 +492,8 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-cream/15 bg-ink-900/40 p-5">
-                    <div className="text-[11px] font-mono font-bold uppercase tracking-super text-cream/60 mb-2">
+                  <div className="rounded-2xl border-2 border-ink/15 bg-cream-50 p-5">
+                    <div className="text-[11px] font-mono font-bold uppercase tracking-super text-ink/70 mb-2">
                       03 · Builder title
                     </div>
                     <div
@@ -416,23 +506,23 @@ export default function App() {
                       <button
                         type="button"
                         onClick={handleRetryTitle}
-                        className="text-[11px] font-mono uppercase tracking-super text-cream/60 hover:text-sun"
+                        className="text-[11px] font-mono uppercase tracking-super text-ink/60 hover:text-pink"
                       >
                         ↻ Try another title
                       </button>
-                      <span className="text-cream/30 text-[11px] font-mono uppercase tracking-super">
+                      <span className="text-ink/40 text-[11px] font-mono uppercase tracking-super">
                         Auto-matched from stack
                       </span>
                     </div>
                   </div>
 
                   {/* Teammates */}
-                  <div className="rounded-2xl border border-cream/15 bg-ink-900/40 p-5">
+                  <div className="rounded-2xl border-2 border-ink/15 bg-cream-50 p-5">
                     <div className="flex items-center justify-between mb-3">
-                      <div className="text-[11px] font-mono font-bold uppercase tracking-super text-cream/60">
+                      <div className="text-[11px] font-mono font-bold uppercase tracking-super text-ink/70">
                         04 · Bring your crew
                       </div>
-                      <div className="text-[10px] font-mono uppercase tracking-super text-cream/40">
+                      <div className="text-[10px] font-mono uppercase tracking-super text-ink/40">
                         {slots.length}/3 builders
                       </div>
                     </div>
@@ -440,15 +530,15 @@ export default function App() {
                     {slots.slice(1).map((slot, i) => {
                       const idx = i + 1;
                       return (
-                        <div key={idx} className="rounded-xl border border-cream/10 p-3 mb-3">
+                        <div key={idx} className="rounded-xl border-2 border-ink/10 p-3 mb-3 bg-cream">
                           <div className="flex items-center justify-between mb-2">
-                            <div className="text-[10px] font-mono uppercase tracking-super text-cream/50">
+                            <div className="text-[10px] font-mono uppercase tracking-super text-ink/50">
                               BUILDER {String(idx + 1).padStart(2, '0')}
                             </div>
                             <button
                               type="button"
                               onClick={() => handleRemoveTeammate(idx)}
-                              className="text-[10px] font-mono uppercase tracking-super text-cream/50 hover:text-pink"
+                              className="text-[10px] font-mono uppercase tracking-super text-ink/50 hover:text-pink"
                             >
                               ✕ Remove
                             </button>
@@ -460,7 +550,7 @@ export default function App() {
                             />
                           ) : (
                             <div className="space-y-3">
-                              <div className="relative rounded-lg overflow-hidden border border-cream/20">
+                              <div className="relative rounded-lg overflow-hidden border-2 border-ink/20">
                                 <img
                                   src={slot.loaded.image.src}
                                   alt={`Teammate ${idx + 1}`}
@@ -494,7 +584,7 @@ export default function App() {
                           </div>
                           {slots.length > 1 && (
                             <div className="mt-3">
-                              <div className="text-[10px] font-mono uppercase tracking-super text-cream/40 mb-1">
+                              <div className="text-[10px] font-mono uppercase tracking-super text-ink/40 mb-1">
                                 Team name
                               </div>
                               <input
@@ -515,7 +605,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={handleAddTeammate}
-                        className="w-full mt-1 rounded-xl border border-dashed border-cream/30 py-3 text-cream/80 hover:text-sun hover:border-sun text-sm font-mono uppercase tracking-super transition-colors"
+                        className="w-full mt-1 rounded-xl border-2 border-dashed border-ink/30 py-3 text-ink/80 hover:text-pink hover:border-pink text-sm font-mono uppercase tracking-super transition-colors bg-cream-50"
                       >
                         + Add teammate ({3 - slots.length} left)
                       </button>
@@ -525,7 +615,7 @@ export default function App() {
                   {error && (
                     <div
                       role="alert"
-                      className="rounded-xl border border-pink/40 bg-pink/10 p-4 text-sm text-cream"
+                      className="rounded-xl border-2 border-pink bg-pink/15 p-4 text-sm text-ink"
                     >
                       <div className="font-mono text-[10px] uppercase tracking-super text-pink mb-1">
                         Heads up
@@ -564,7 +654,7 @@ export default function App() {
                     )}
                   </button>
                   {!canGenerate && !error && (
-                    <p className="text-[11px] text-cream/40 text-center -mt-2 font-mono uppercase tracking-super">
+                    <p className="text-[11px] text-ink/40 text-center -mt-2 font-mono uppercase tracking-super">
                       Fill out every builder to continue
                     </p>
                   )}
@@ -573,13 +663,13 @@ export default function App() {
 
               {step === 'generated' && (
                 <div className="space-y-4">
-                  <div className="rounded-2xl border border-cream/15 bg-ink-900/40 p-5">
-                    <div className="text-[11px] font-mono font-bold uppercase tracking-super text-cream/60 mb-2">
+                  <div className="rounded-2xl border-2 border-ink/15 bg-cream-50 p-5">
+                    <div className="text-[11px] font-mono font-bold uppercase tracking-super text-ink/70 mb-2">
                       {generatedKind === 'team' ? 'Your Crew' : 'Your Builder ID'}
                     </div>
                     {generatedKind === 'team' ? (
                       <div>
-                        <div className="display-xl-tight text-3xl sm:text-4xl text-sun">
+                        <div className="display-xl-tight text-3xl sm:text-4xl text-ink">
                           {teamName.toUpperCase()}
                         </div>
                         <div className="mt-3 space-y-2">
@@ -587,7 +677,7 @@ export default function App() {
                             const klass = pickTitleVariant(s.stack, 0).title;
                             return (
                               <div key={i} className="flex items-center justify-between text-sm">
-                                <div className="text-cream font-mono uppercase tracking-super">
+                                <div className="text-ink font-mono uppercase tracking-super">
                                   {s.name.toUpperCase()} · {s.stack.toUpperCase()}
                                 </div>
                                 <div className="text-pink font-mono uppercase tracking-super text-xs">
@@ -601,12 +691,12 @@ export default function App() {
                     ) : (
                       <>
                         <div
-                          className="display-xl-tight text-3xl sm:text-4xl text-sun"
+                          className="display-xl-tight text-3xl sm:text-4xl text-ink"
                           style={{ letterSpacing: '-0.01em' }}
                         >
                           {active.name.toUpperCase()}
                         </div>
-                        <div className="mt-1 text-cream/70 text-sm font-mono uppercase tracking-super">
+                        <div className="mt-1 text-ink/70 text-sm font-mono uppercase tracking-super">
                           {active.stack.toUpperCase()}
                         </div>
                         <div className="mt-4 text-pink display-xl-tight text-2xl">
@@ -670,7 +760,7 @@ export default function App() {
                   {error && (
                     <div
                       role="alert"
-                      className="rounded-xl border border-pink/40 bg-pink/10 p-4 text-sm text-cream"
+                      className="rounded-xl border-2 border-pink bg-pink/15 p-4 text-sm text-ink"
                     >
                       <div className="font-mono text-[10px] uppercase tracking-super text-pink mb-1">
                         Heads up
@@ -679,7 +769,7 @@ export default function App() {
                     </div>
                   )}
 
-                  <p className="text-[11px] text-cream/40 text-center leading-relaxed">
+                  <p className="text-[11px] text-ink/40 text-center leading-relaxed">
                     Downloads as a single flattened 1080×1350 PNG.
                   </p>
                 </div>
@@ -690,19 +780,21 @@ export default function App() {
             <div className={step === 'generated' ? 'lg:col-span-7 order-1 lg:order-2' : 'lg:order-2'}>
               <div className="lg:sticky lg:top-6">
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="pill text-cream/70 border-cream/15">
+                  <span className="pill text-ink/80 border-ink/20">
                     {step === 'generated'
                       ? generatedKind === 'team'
                         ? 'TEAM FRAME'
                         : 'YOUR BUILDER ID'
                       : 'PREVIEW'}
                   </span>
-                  <span className="text-[10px] font-mono uppercase tracking-super text-cream/40">
+                  <span className="text-[10px] font-mono uppercase tracking-super text-ink/40">
                     1080 × 1350 · PNG
                   </span>
                 </div>
 
-                <div className="relative rounded-2xl border border-cream/10 bg-ink-900/30 p-3 sm:p-5 overflow-hidden grid-paper">
+                <div
+                  className="relative rounded-2xl border-2 border-ink/15 bg-cream-50 p-3 sm:p-5 overflow-hidden grain"
+                >
                   <div className="flex items-center justify-center">
                     <div
                       style={{
@@ -710,41 +802,24 @@ export default function App() {
                         aspectRatio: `${CARD_W} / ${CARD_H}`,
                       }}
                     >
-                      <ScaledPreview>
-                        {generatedKind === 'team' || slots.length > 1 ? (
-                          <TeamPreview
-                            ref={previewRef}
-                            teamName={teamName}
-                            members={slots.map((s) => ({
-                              name: s.name || (slots[0] === s ? 'YOUR NAME' : `BUILDER ${slots.indexOf(s) + 1}`),
-                              stackOrRole: s.stack || 'BUILDER',
-                              builderClass: pickTitleVariant(s.stack, s.titleVariant).title,
-                              photo: s.loaded?.exportSource ?? null,
-                              adjust: s.adjust,
-                            }))}
-                            size={CARD_W}
-                            className="w-full h-full"
-                          />
-                        ) : (
-                          <BuilderIDPreview
-                            ref={previewRef}
-                            data={{
-                              name: active.name || 'YOUR NAME',
-                              stackOrRole: active.stack || 'BUILDER',
-                              builderTitle: builderClass,
-                              photo: active.loaded?.exportSource ?? null,
-                              adjust: active.adjust,
-                            }}
-                            size={CARD_W}
-                            className="w-full h-full"
-                          />
-                        )}
-                      </ScaledPreview>
+                      <FramePreviewHost
+                        generatedCanvas={generatedCanvas}
+                        generatedKind={generatedKind}
+                        slots={slots.map((s) => ({
+                          loaded: s.loaded ? { exportSource: s.loaded.exportSource } : null,
+                          adjust: s.adjust,
+                          name: slots[0] === s ? (active.name || 'YOUR NAME') : (s.name || `BUILDER ${slots.indexOf(s) + 1}`),
+                          stack: slots[0] === s ? (active.stack || 'BUILDER') : (s.stack || 'BUILDER'),
+                          builderClass: pickTitleVariant(s.stack, s.titleVariant).title,
+                        }))}
+                        teamName={teamName}
+                        fillContainer
+                      />
                     </div>
                   </div>
                 </div>
 
-                <p className="text-[11px] text-cream/40 mt-3 text-center leading-relaxed">
+                <p className="text-[11px] text-ink/50 mt-3 text-center leading-relaxed">
                   {slots.length > 1
                     ? 'Photo + builder details + classes baked into one team frame.'
                     : 'Photo + name + stack + builder class + all branding, baked into one image.'}
@@ -755,15 +830,24 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="mt-auto px-4 sm:px-8 py-6 border-t border-cream/10">
-        <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-3 text-cream/40 text-xs">
+      <footer className="mt-auto px-4 sm:px-8 py-8 bg-ink text-cream">
+        <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-3 text-cream/80 text-xs">
           <div className="flex items-center gap-2">
             <span className="font-mono uppercase tracking-super">
               HACKER HOUSE GOA · 2026
             </span>
           </div>
-          <div className="font-mono uppercase tracking-super">
-            Build · Ship · Repeat · 28—31 Oct 2026
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={goHome}
+              className="font-mono uppercase tracking-super text-cream/70 hover:text-sun transition-colors"
+            >
+              ← Back to hype
+            </button>
+            <span className="font-mono uppercase tracking-super text-sun">
+              Build · Ship · Repeat · 28—31 Oct 2026
+            </span>
           </div>
         </div>
       </footer>
@@ -779,7 +863,7 @@ function TeammateUploader({ loading, onFile }: { loading: boolean; onFile: (f: F
       type="button"
       onClick={() => inputRef.current?.click()}
       disabled={loading}
-      className="w-full rounded-xl border border-dashed border-cream/25 bg-ink-900/40 py-4 text-cream/70 hover:text-sun hover:border-sun text-sm font-mono uppercase tracking-super"
+      className="w-full rounded-xl border-2 border-dashed border-ink/25 bg-cream-50 py-4 text-ink/70 hover:text-pink hover:border-pink text-sm font-mono uppercase tracking-super"
     >
       + Drop teammate photo
       <input
@@ -793,42 +877,6 @@ function TeammateUploader({ loading, onFile }: { loading: boolean; onFile: (f: F
         }}
       />
     </button>
-  );
-}
-
-function ScaledPreview({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const update = () => {
-      const w = el.clientWidth;
-      if (w > 0) setScale(w / CARD_W);
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  return (
-    <div ref={ref} className="relative w-full h-full overflow-hidden">
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: CARD_W,
-          height: CARD_H,
-          transformOrigin: 'top left',
-          transform: `scale(${scale})`,
-        }}
-      >
-        {children}
-      </div>
-    </div>
   );
 }
 

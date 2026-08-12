@@ -1,11 +1,24 @@
 // Team DOM preview. Mirrors lib/teamExport.ts so the team download
-// is what the user sees. Cohesive group composition:
+// is what the user sees.
+//
+// Composition (badge-style — 3 photo circles sit ABOVE the rectangular
+// ID card, overlapping its top edge like a profile-photo badge):
 //   1. header band    (200) – HH brand, dates, ticket stub
 //   2. goa scene      (160) – mountain ridge + palms + sun
-//   3. crew zone      (470) – 3 portraits in a unified row
-//   4. name strip     (180) – wavy top, 3 names with ⚡ accents
-//   5. class strip    (160) – pink, 3 builder class titles
-//   6. footer         (~180 -> 90 effective) – dense postcard footer
+//   3. badge row      (280) – 3 portrait circles in a row, centered
+//                              above the card, overlapping its top edge
+//   4. card body      (620) – unified rectangular "TEAM ID CARD":
+//                              – cream block with palm fronds + sun
+//                                + scooter + route decorations
+//                              – wavy top edge so circles overlap cleanly
+//                              – 3 names with ⚡ accents (name strip)
+//                              – pink class band with 3 builder titles
+//   5. footer         (90)  – dense postcard footer
+//
+// The DOM uses `position: relative` on the card body and `position:
+// absolute` on the badge row, anchored to the card's top edge. The
+// circles overflow upward by ~50% of their radius. As `size` scales,
+// both scale together because they live inside the same wrapper.
 
 import React, { forwardRef, useMemo } from 'react';
 import {
@@ -35,14 +48,21 @@ type Props = {
 
 const HEADER_H = 200;
 const GOA_H = 160;
-const CREW_TOP = HEADER_H + GOA_H;
-const CREW_H = 470;
-const CREW_BOTTOM = CREW_TOP + CREW_H;
+// The "badge row" is a dedicated band that holds the 3 photo circles.
+// The circles overflow upward into the area above the card and dip
+// slightly into the card's top edge (~30% of their radius) — the
+// profile-badge silhouette.
+const BADGE_ROW_H = 280;
+const PHOTO_R = 130;
+// The rectangular "TEAM ID CARD" container starts at CARD_TOP — this is
+// where the badge-row circles cross the top edge.
+const CARD_TOP = HEADER_H + GOA_H + BADGE_ROW_H; // 200 + 160 + 280 = 640
 const NAME_H = 180;
-const NAME_TOP = CREW_BOTTOM;
 const CLASS_H = 160;
+const FOOTER_H = 90;
+const CARD_BODY_H = CARD_H - CARD_TOP - FOOTER_H; // 1350 - 640 - 90 = 620
+const NAME_TOP = CARD_TOP;
 const CLASS_TOP = NAME_TOP + NAME_H;
-const FOOTER_H = CARD_H - (CLASS_TOP + CLASS_H);
 const FOOTER_TOP = CARD_H - FOOTER_H;
 
 export const TeamPreview = forwardRef<HTMLDivElement, Props>(function TeamPreview(
@@ -87,9 +107,31 @@ export const TeamPreview = forwardRef<HTMLDivElement, Props>(function TeamPrevie
 
         <TeamHeader teamName={teamName} count={members.length} firstBuilderNo={members[0]?.builderNumber} />
         <TeamGoaScene />
-        <TeamCrew members={padded} />
-        <TeamNameStrip members={padded} />
-        <TeamClassStrip members={padded} />
+
+        {/*
+          Card body — the rectangular "TEAM ID CARD" container. It is
+          `position: relative` so the badge row (its first child) can be
+          absolutely positioned against its top edge. The 3 photo circles
+          overflow upward and overlap the goa band, and overlap the card's
+          top edge for a profile-badge silhouette.
+        */}
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: CARD_TOP,
+            width: CARD_W,
+            height: CARD_BODY_H,
+            background: COLORS.cream,
+            zIndex: 2,
+          }}
+        >
+          <TeamBadgeRow members={padded} />
+          <TeamCardDecorations />
+          <TeamNameStrip members={padded} />
+          <TeamClassStrip members={padded} />
+        </div>
+
         <TeamFooter />
       </div>
     </div>
@@ -435,54 +477,50 @@ function TeamGoaScene() {
 
 // -------------------- crew zone --------------------
 
-function TeamCrew({
+// -------------------- badge row (above the card) --------------------
+//
+// The badge row lives inside the card-body container (which is
+// `position: relative`). The badge row is `position: absolute` and
+// anchored to the card's top edge (top: 0). Each circle's `cy` is
+// chosen so the bottom 50% of the circle crosses the card's top edge,
+// giving the "profile-photo badge sitting above the card" silhouette.
+//
+// overflow: visible on the card body is what lets the circles extend
+// upward into the goa band. overflow: hidden on the badge row itself
+// would clip the inner photo, so we let it overflow naturally and rely
+// on the outer frame's overflow: hidden to crop to the card silhouette.
+function TeamBadgeRow({
   members,
 }: {
   members: (TeamMemberInput | null)[];
 }) {
   const slotW = CARD_W / 3;
-  const cy = CREW_TOP + 230;
-  const r = 150;
+  // cy is measured relative to the card body's top edge. A negative
+  // value lifts the circle's center above the card top so most of the
+  // disc sits above the card and only ~30% dips in (profile-badge
+  // silhouette). With PHOTO_R=130 and the 12px sun-yellow ring, the
+  // circle's visual bottom (cy + r + 12) lands at +4 inside the card —
+  // safely above the name text which starts at y=30 inside the card.
+  const cy = -PHOTO_R + 4 + 12; // ≈ -114; circle bottom ≈ +18 inside card
+  const r = PHOTO_R;
   return (
     <div
       style={{
         position: 'absolute',
         left: 0,
-        top: CREW_TOP,
+        // Anchor the badge row to the card's top edge.
+        top: 0,
         width: CARD_W,
-        height: CREW_H,
-        background: COLORS.cream,
-        overflow: 'hidden',
+        // The badge row extends visually upward into the goa band
+        // (~PHOTO_R pixels) and downward into the card. We give it a
+        // tall height to host the postmark/builder-stamp labels that
+        // sit above the photo, but only its inner content is visible
+        // because the card body clips it on the bottom.
+        height: r + 200,
+        pointerEvents: 'none',
+        zIndex: 3,
       }}
     >
-      {/* Wave pattern */}
-      <svg
-        viewBox="0 0 1000 50"
-        preserveAspectRatio="none"
-        style={{
-          position: 'absolute',
-          left: 20,
-          right: 20,
-          bottom: 90,
-          width: 'calc(100% - 40px)',
-          height: 24,
-          opacity: 0.6,
-        }}
-      >
-        <path
-          d="M0 12 Q100 -4 200 12 T400 12 T600 12 T800 12 T1000 12"
-          fill="none"
-          stroke={COLORS.pink}
-          strokeWidth={3}
-          strokeLinecap="round"
-        />
-      </svg>
-
-      {/* Shared palms top-left + top-right (cross-region decoration) */}
-      <PalmSVG x={60} y={90} h={130} color={COLORS.stamp} scale={1} mirrored />
-      <PalmSVG x={CARD_W - 60} y={90} h={130} color={COLORS.stamp} scale={1} />
-
-      {/* Three portrait slots */}
       {members.map((m, i) => {
         const cx = slotW * i + slotW / 2;
         return (
@@ -496,12 +534,92 @@ function TeamCrew({
           />
         );
       })}
+    </div>
+  );
+}
 
-      {/* Shared postmark footer line */}
+// -------------------- card-body decorations --------------------
+//
+// Palms / sun / scooter / route / shared postmark that previously
+// lived in the crew zone. Now they sit inside the card body, below
+// the badge row, so the card reads as one cohesive illustrated card.
+function TeamCardDecorations() {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: CARD_W,
+        height: CARD_BODY_H,
+        // The cream card background paints over the goa band above it,
+        // but the badge row overflows on top so this is the actual card
+        // surface. The decoration layer is below the badge row.
+        background: COLORS.cream,
+        zIndex: 1,
+        pointerEvents: 'none',
+      }}
+    >
+      {/* Palm fronds at the top corners of the card */}
+      <PalmSVG x={80} y={80} h={130} color={COLORS.stamp} scale={1} mirrored />
+      <PalmSVG x={CARD_W - 80} y={80} h={130} color={COLORS.stamp} scale={1} />
+
+      {/* Sun in upper-right of the card */}
+      <SunSVG
+        cx={CARD_W - 160}
+        cy={140}
+        r={56}
+        fill={COLORS.sun}
+        ray={COLORS.sunDeep}
+      />
+
+      {/* Dotted travel route across the card body */}
+      {(() => {
+        const routeY = 220;
+        const dots: number[] = [];
+        for (let x = 30; x <= CARD_W - 30; x += 8) dots.push(x);
+        return (
+          <>
+            <div
+              style={{
+                position: 'absolute',
+                top: routeY - 18,
+                left: 0,
+                right: 0,
+                textAlign: 'center',
+                fontFamily: FONT.mono,
+                fontWeight: 700,
+                fontSize: 10,
+                color: COLORS.pink,
+                letterSpacing: '0.3em',
+              }}
+            >
+              ROUTE · BAGA → ANJUNA → PALOLEM
+            </div>
+            {dots.map((x, i) => (
+              <div
+                key={i}
+                style={{
+                  position: 'absolute',
+                  left: x - 4,
+                  top: routeY - 4,
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: COLORS.pink,
+                }}
+              />
+            ))}
+            <ScooterSVG cx={CARD_W * 0.55} cy={routeY} scale={1.4} color={COLORS.ink} />
+          </>
+        );
+      })()}
+
+      {/* Shared postmark footer line, sitting just above the class strip */}
       <div
         style={{
           position: 'absolute',
-          bottom: 26,
+          bottom: CLASS_H + 50,
           left: 0,
           right: 0,
           textAlign: 'center',
@@ -517,7 +635,7 @@ function TeamCrew({
       <div
         style={{
           position: 'absolute',
-          bottom: 8,
+          bottom: CLASS_H + 28,
           left: 0,
           right: 0,
           textAlign: 'center',
@@ -555,17 +673,19 @@ function MemberSlot({
 
   return (
     <>
-      {/* Cream postage plate (rotated) */}
+      {/* Cream postage plate (rotated, subtle backing behind the photo) */}
       <div
         style={{
           position: 'absolute',
-          left: cx - 160,
-          top: cy - 130,
-          width: 320,
-          height: 240,
+          left: cx - 140,
+          top: cy - 105,
+          width: 280,
+          height: 210,
           background: COLORS.pink,
-          transform: `translate(${cx - (cx - 160) - 160}px, 0) rotate(-2.3deg)`,
-          boxShadow: `inset 0 0 0 12px ${COLORS.cream}`,
+          transform: `translate(${cx - (cx - 140) - 140}px, 0) rotate(-2.3deg)`,
+          boxShadow: `inset 0 0 0 10px ${COLORS.cream}`,
+          opacity: 0.95,
+          pointerEvents: 'none',
         }}
       />
 
@@ -661,19 +781,19 @@ function MemberSlot({
         }}
       />
 
-      <StarSVG x={cx} y={cy - r - 18} r={10} color={COLORS.pink} />
+      <StarSVG x={cx} y={cy - r * 0.55} r={10} color={COLORS.pink} />
 
       <RoundStampSVG
-        cx={cx}
-        cy={cy - r - 50}
-        r={30}
+        cx={cx + r * 0.55}
+        cy={cy + r * 0.55}
+        r={26}
         topLabel="BUILDER"
         bottomLabel={`No. ${String(builderNo).padStart(3, '0')}`}
         color={COLORS.ink}
         accent={COLORS.sun}
         outerColor={COLORS.ink}
-        fontSizeTop={10}
-        fontSizeBottom={13}
+        fontSizeTop={9}
+        fontSizeBottom={11}
       />
     </>
   );
@@ -683,7 +803,10 @@ function MemberSlot({
 
 function TeamNameStrip({ members }: { members: (TeamMemberInput | null)[] }) {
   const slotW = CARD_W / 3;
-  const wavyY = NAME_TOP;
+  // Inside the card body, the name strip starts at relative y=0
+  // (it IS the top of the card body — the wavy top edge is here so
+  // the photo circles can overlap it cleanly).
+  const wavyY = 0;
 
   // Wavy top path
   const points: string[] = [];
@@ -693,10 +816,23 @@ function TeamNameStrip({ members }: { members: (TeamMemberInput | null)[] }) {
   }
   const wavyPath =
     `M0,${wavyY} ` + points.map((p) => `L${p}`).join(' ') +
-    ` L${CARD_W},${CARD_H} L0,${CARD_H} Z`;
+    ` L${CARD_W},${NAME_H} L0,${NAME_H} Z`;
 
   return (
-    <>
+    <div
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: CARD_W,
+        height: NAME_H,
+        // Sit ABOVE the decorations and badge row so the cream wavy
+        // block reads as the card surface (and so the name text is
+        // legible over the route/sun decorations).
+        zIndex: 4,
+        pointerEvents: 'none',
+      }}
+    >
       {/* Wavy cream block */}
       <svg
         style={{
@@ -704,10 +840,9 @@ function TeamNameStrip({ members }: { members: (TeamMemberInput | null)[] }) {
           top: 0,
           left: 0,
           width: CARD_W,
-          height: CARD_H,
-          pointerEvents: 'none',
+          height: NAME_H,
         }}
-        viewBox={`0 0 ${CARD_W} ${CARD_H}`}
+        viewBox={`0 0 ${CARD_W} ${NAME_H}`}
         preserveAspectRatio="none"
       >
         <path d={wavyPath} fill={COLORS.cream} />
@@ -718,7 +853,7 @@ function TeamNameStrip({ members }: { members: (TeamMemberInput | null)[] }) {
         style={{
           position: 'absolute',
           left: 0,
-          top: wavyY + 18,
+          top: 18,
           width: 14,
           height: NAME_H - 18,
           background: COLORS.sun,
@@ -729,7 +864,7 @@ function TeamNameStrip({ members }: { members: (TeamMemberInput | null)[] }) {
         style={{
           position: 'absolute',
           left: 32,
-          top: wavyY + 18,
+          top: 30,
           fontFamily: FONT.mono,
           fontWeight: 700,
           fontSize: 11,
@@ -751,7 +886,7 @@ function TeamNameStrip({ members }: { members: (TeamMemberInput | null)[] }) {
               style={{
                 position: 'absolute',
                 left: cx - fontSize * 0.55 - fontSize * 0.5,
-                top: wavyY + 80,
+                top: 80,
                 fontFamily: FONT.display,
                 fontSize: fontSize,
                 color: COLORS.sun,
@@ -766,7 +901,7 @@ function TeamNameStrip({ members }: { members: (TeamMemberInput | null)[] }) {
               style={{
                 position: 'absolute',
                 left: cx - fontSize * 0.5,
-                top: wavyY + 80,
+                top: 80,
                 fontFamily: FONT.display,
                 fontSize: fontSize,
                 color: COLORS.ink,
@@ -781,7 +916,7 @@ function TeamNameStrip({ members }: { members: (TeamMemberInput | null)[] }) {
               style={{
                 position: 'absolute',
                 left: cx + fontSize * 0.05,
-                top: wavyY + 80,
+                top: 80,
                 fontFamily: FONT.display,
                 fontSize: fontSize,
                 color: COLORS.pink,
@@ -796,7 +931,7 @@ function TeamNameStrip({ members }: { members: (TeamMemberInput | null)[] }) {
               style={{
                 position: 'absolute',
                 left: 0,
-                top: wavyY + NAME_H - 40,
+                top: NAME_H - 40,
                 width: slotW,
                 textAlign: 'center',
                 fontFamily: FONT.mono,
@@ -811,7 +946,7 @@ function TeamNameStrip({ members }: { members: (TeamMemberInput | null)[] }) {
           </React.Fragment>
         );
       })}
-    </>
+    </div>
   );
 }
 
@@ -823,12 +958,15 @@ function TeamClassStrip({ members }: { members: (TeamMemberInput | null)[] }) {
     <div
       style={{
         position: 'absolute',
+        // Sit relative to the card body — the class strip starts at
+        // NAME_H (just below the wavy name block).
         left: 0,
-        top: CLASS_TOP,
+        top: NAME_H,
         width: CARD_W,
         height: CLASS_H,
         background: COLORS.pink,
         overflow: 'hidden',
+        zIndex: 2,
       }}
     >
       <div

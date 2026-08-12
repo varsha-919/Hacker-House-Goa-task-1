@@ -15,7 +15,7 @@ export function PhotoEditor({ adjust, onChange, onReset }: Props) {
         <button
           type="button"
           onClick={onReset}
-          className="text-[11px] font-mono uppercase tracking-super text-cream/60 hover:text-sun"
+          className="text-[11px] font-mono uppercase tracking-super text-ink/60 hover:text-pink"
         >
           ↻ Reset
         </button>
@@ -72,10 +72,10 @@ function Slider({
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[11px] font-mono font-bold uppercase tracking-super text-cream/70">
+        <span className="text-[11px] font-mono font-bold uppercase tracking-super text-ink/70">
           {label}
         </span>
-        <span className="text-[11px] font-mono text-sun">{format(value)}</span>
+        <span className="text-[11px] font-mono text-pink">{format(value)}</span>
       </div>
       <input
         type="range"

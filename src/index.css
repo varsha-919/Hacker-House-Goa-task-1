@@ -5,17 +5,43 @@
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    -moz-osx-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
+  /* ------------------------------------------------------
+     Page background: cream printed-poster environment.
+
+     Cream `#F5EBD7` is the dominant color of the entire site now.
+     Deep green is reserved for typography + brand accents. The
+     page reads as a physical Goa poster laid on a cream surface,
+     not a dark green SaaS page.
+  ------------------------------------------------------ */
   body {
-    @apply bg-ink text-cream font-body;
-    background-color: #0E2A1F;
+    @apply text-ink font-body;
+    background-color: #F5EBD7;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 210, 63, 0.12), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 45, 123, 0.10), transparent);
+      /* subtle paper-grain halftone via two radial gradients */
+      radial-gradient(
+        circle at 18% 22%,
+        rgba(14, 42, 31, 0.035) 0,
+        rgba(14, 42, 31, 0.035) 1px,
+        transparent 1.5px,
+        transparent 5px
+      ),
+      radial-gradient(
+        circle at 78% 68%,
+        rgba(14, 42, 31, 0.025) 0,
+        rgba(14, 42, 31, 0.025) 1px,
+        transparent 1.5px,
+        transparent 6px
+      ),
+      /* very faint paper edges */
+      radial-gradient(ellipse 100% 80% at 50% 50%, #FBF6E8 0%, #F5EBD7 70%, #E9DAB7 100%);
+    background-size: 22px 22px, 28px 28px, 100% 100%;
+    background-attachment: fixed;
     min-height: 100vh;
+    color: #0E2A1F;
   }
 
   button {
@@ -66,27 +92,27 @@
 
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full
-           border border-cream/30 text-cream
+           border border-ink/30 text-ink
            px-5 py-3 text-sm font-medium
-           transition-colors hover:bg-cream/10;
+           transition-colors hover:bg-ink/10;
   }
 
   .input-field {
-    @apply w-full bg-ink-900/60 border border-cream/20
-           text-cream placeholder-cream/40
+    @apply w-full bg-cream-50 border border-ink/20
+           text-ink placeholder-ink/40
            rounded-xl px-4 py-3.5 text-base
            transition-colors
-           focus:border-sun focus:bg-ink-900/80;
+           focus:border-pink focus:bg-cream-50;
   }
 
   .label-field {
     @apply block text-[11px] font-mono font-bold uppercase
-           tracking-super text-cream/70 mb-2;
+           tracking-super text-ink/70 mb-2;
   }
 
   .pill {
     @apply inline-flex items-center gap-2 rounded-full
-           border border-cream/20 px-3 py-1
+           border border-ink/20 px-3 py-1
            text-[10px] font-mono uppercase tracking-super;
   }
 
@@ -110,8 +136,8 @@
   .stripes {
     background-image: repeating-linear-gradient(
       45deg,
-      rgba(245, 235, 215, 0.08) 0,
-      rgba(245, 235, 215, 0.08) 2px,
+      rgba(14, 42, 31, 0.06) 0,
+      rgba(14, 42, 31, 0.06) 2px,
       transparent 2px,
       transparent 16px
     );
@@ -119,8 +145,8 @@
 
   .grid-paper {
     background-image:
-      linear-gradient(rgba(245, 235, 215, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(245, 235, 215, 0.05) 1px, transparent 1px);
+      linear-gradient(rgba(14, 42, 31, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(14, 42, 31, 0.05) 1px, transparent 1px);
     background-size: 28px 28px;
   }
 
@@ -140,4 +166,295 @@
     padding-left: 0.75rem;
     padding-right: 0.75rem;
   }
+}
+
+/* ---------------- landing-page additions ---------------- */
+
+/* "Printed poster" title weight. The shadow gives Anton letters a subtle
+   paper-ink feel rather than a flat digital type look. Color is deep
+   green so the title sits strong on cream paper. */
+.huge-title {
+  font-family: 'Anton', Impact, sans-serif;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #0E2A1F;
+  text-shadow:
+    2px 2px 0 #FFD23F,
+    5px 5px 0 rgba(14, 42, 31, 0.18);
+}
+
+@media (min-width: 1024px) {
+  .huge-title {
+    text-shadow:
+      3px 3px 0 #FFD23F,
+      7px 7px 0 rgba(14, 42, 31, 0.2);
+  }
+}
+
+/* The pink "गोवा" serif glyph stamped between HACKER and HOUSE.
+   Looks like a rubber stamp pressed onto the cream paper, with
+   layered yellow + green ink offsets for the "double-print" look. */
+.stamp-glyph {
+  font-family: 'Noto Serif Devanagari', 'Fraunces', 'DM Serif Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 900;
+  color: #FF2D7B;
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  text-shadow:
+    4px 4px 0 #FEE101,
+    8px 8px 0 #0E2A1F;
+  transform: rotate(-4deg) translateZ(60px);
+  display: inline-block;
+}
+
+/* Ticket-style primary CTA — redesigned per the brief: yellow body
+   with pink border, deep-green text, slight rotation, physical lift
+   on hover. Reads as a printed event ticket. */
+.ticket-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: #FFD23F;
+  color: #0E2A1F;
+  font-family: 'Anton', Impact, sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1rem 2rem;
+  border-radius: 4px;
+  border: 3px solid #FF2D7B;
+  box-shadow:
+    inset 0 0 0 3px #FFD23F,
+    inset 0 0 0 5px #0E2A1F,
+    8px 8px 0 0 #0E2A1F;
+  transform: rotate(-1.5deg);
+  transition: transform 180ms ease-out, box-shadow 180ms ease-out;
+  position: relative;
+}
+
+.ticket-btn:hover {
+  transform: rotate(-1.5deg) translate(-3px, -3px);
+  box-shadow:
+    inset 0 0 0 3px #FFD23F,
+    inset 0 0 0 5px #0E2A1F,
+    11px 11px 0 0 #0E2A1F;
+}
+
+.ticket-btn:active {
+  transform: rotate(-1.5deg) translate(2px, 2px);
+  box-shadow:
+    inset 0 0 0 3px #FFD23F,
+    inset 0 0 0 5px #0E2A1F,
+    4px 4px 0 0 #0E2A1F;
+}
+
+/* Smaller variant for the bridge section. */
+.ticket-btn-sm {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+}
+
+/* The APPLY button on the top bar — smaller, the same ticket vocabulary. */
+.ticket-btn-tiny {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFD23F;
+  color: #0E2A1F;
+  font-family: 'Anton', Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 0.95rem;
+  border-radius: 3px;
+  border: 2px solid #FF2D7B;
+  box-shadow:
+    inset 0 0 0 2px #FFD23F,
+    inset 0 0 0 3px #0E2A1F,
+    3px 3px 0 0 #0E2A1F;
+  font-size: 0.78rem;
+  transition: transform 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.ticket-btn-tiny:hover {
+  transform: translate(-2px, -2px);
+  box-shadow:
+    inset 0 0 0 2px #FFD23F,
+    inset 0 0 0 3px #0E2A1F,
+    5px 5px 0 0 #0E2A1F;
+}
+
+/* Hand-drawn dotted rule used to separate editorial sections. */
+.dashed-rule {
+  height: 0;
+  border-top: 2px dashed rgba(14, 42, 31, 0.25);
+}
+
+/* Paper-grain decorative overlay. Sits on top of the hero scene
+   to add subtle printed-paper texture without an image asset. */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-radial-gradient(
+    circle at 30% 40%,
+    rgba(14, 42, 31, 0.04) 0,
+    rgba(14, 42, 31, 0.04) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  mix-blend-mode: multiply;
+  z-index: 1;
+}
+
+/* Page-load animations for the hero.
+   Subtle, non-showy — a printed poster brought to life, not a SaaS splash. */
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes softFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(255, 210, 63, 0)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(255, 210, 63, 0.6)); }
+}
+
+.anim-hero-1 {
+  animation: slideUpFade 600ms ease-out both;
+  animation-delay: 0ms;
+}
+
+.anim-hero-2 {
+  animation: slideUpFade 600ms ease-out both;
+  animation-delay: 120ms;
+}
+
+.anim-hero-3 {
+  animation: slideUpFade 600ms ease-out both;
+  animation-delay: 240ms;
+}
+
+.anim-meta {
+  animation: softFade 500ms ease-out both;
+  animation-delay: 360ms;
+}
+
+.anim-cta {
+  animation: slideUpFade 600ms ease-out both, glowPulse 3s ease-in-out infinite;
+  animation-delay: 480ms, 1.2s;
+}
+
+/* Tiny scribble-style underline used for the sub-CTA text. */
+.hand-underline {
+  background-image: linear-gradient(
+    to right,
+    rgba(255, 45, 123, 0.8) 0,
+    rgba(255, 45, 123, 0.8) 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 2px;
+  background-position: 0 100%;
+  padding-bottom: 2px;
+}
+
+/* ---------------- 3D parallax hero ---------------- */
+/* Hero acts like a layered poster tilting gently with the cursor
+   (driven by --rx / --ry written from JS). Title is deepest, palms
+   mid, frame + stamp most forward. */
+.poster-stage {
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+  position: relative;
+  overflow: visible;
+}
+
+.poster-stage__inner {
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: transform;
+}
+
+/* Depth hierarchy — smaller spread than before so 3D objects sit
+   clearly in front of/behind the HACKER HOUSE typography. */
+.depth-back  { transform: translateZ(-30px); }
+.depth-mid   { transform: translateZ(0px); }
+.depth-front { transform: translateZ(40px); }
+.depth-far   { transform: translateZ(-60px); }
+
+/* Stamp keeps its signature -4deg tilt; Z-translate just pushes it
+   forward of the page plane. */
+.stamp-glyph {
+  transform: rotate(-4deg) translateZ(60px);
+}
+
+/* Ticket CTA gets a tiny lift on its own plane. */
+.ticket-btn {
+  transform: rotate(-1.5deg) translateZ(30px);
+  transition:
+    transform 180ms ease-out,
+    box-shadow 180ms ease-out;
+}
+.ticket-btn:hover {
+  transform: rotate(-1.5deg) translate(-3px, -3px) translateZ(40px);
+}
+
+/* Honor user motion preferences — freeze all parallax, hide R3F canvas
+   host. Pure HTML/CSS page remains. */
+@media (prefers-reduced-motion: reduce) {
+  .poster-stage__inner {
+    transform: none !important;
+    transition: none !important;
+  }
+  .depth-back,
+  .depth-mid,
+  .depth-front,
+  .depth-far,
+  .stamp-glyph,
+  .ticket-btn {
+    transform: none !important;
+  }
+  .hero-canvas-host {
+    display: none !important;
+  }
+  /* But keep the stamp's signature rotation when motion is reduced —
+     it's part of the printed-poster look, not motion. */
+  .stamp-glyph {
+    transform: rotate(-4deg) !important;
+  }
+  .ticket-btn {
+    transform: rotate(-1.5deg) !important;
+  }
+}
+
+/* The R3F <canvas> lives in a host that sits behind the hero typography.
+   absolute + inset:0 lets it fill the section. pointer-events:none lets
+   the cursor reach the parallax listener through transparent gaps in the
+   typography. z-index:-1 keeps it behind the type and any other content.
+   Border-radius matches the cream-poster corners. */
+.hero-canvas-host {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+/* WebGL canvases default to opaque backgrounds; force alpha so the
+   cream page color shows through. */
+.hero-canvas-host canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
 }

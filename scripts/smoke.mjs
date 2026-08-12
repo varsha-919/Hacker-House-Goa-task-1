@@ -22,7 +22,13 @@ const TINY_JPEG_DATAURL =
 const { window } = new JSDOM('', { url: 'http://localhost/', pretendToBeVisual: true });
 globalThis.window = window;
 globalThis.document = window.document;
-globalThis.navigator = window.navigator;
+// Node.js 22 made globalThis.navigator a read-only getter. Use
+// Object.defineProperty so it can be replaced with JSDOM's navigator.
+Object.defineProperty(globalThis, 'navigator', {
+  value: window.navigator,
+  writable: true,
+  configurable: true,
+});
 globalThis.HTMLCanvasElement = window.HTMLCanvasElement;
 globalThis.HTMLImageElement = window.HTMLImageElement;
 globalThis.Image = window.Image;

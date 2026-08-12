@@ -46,20 +46,20 @@ export function PhotoUploader({ onFile, onError, loading }: Props) {
         'flex flex-col items-center justify-center text-center',
         'min-h-[200px] sm:min-h-[240px] p-6 sm:p-8',
         dragOver
-          ? 'border-sun bg-sun/10'
-          : 'border-cream/25 bg-ink-900/40 hover:border-sun hover:bg-ink-700/30',
+          ? 'border-sun bg-sun/15'
+          : 'border-ink/25 bg-cream hover:border-pink hover:bg-cream-50',
         loading ? 'opacity-60 cursor-wait' : 'cursor-pointer',
       ].join(' ')}
     >
       <div className="flex flex-col items-center gap-3">
-        <div className="w-14 h-14 rounded-full bg-sun flex items-center justify-center text-ink text-2xl font-bold leading-none">
+        <div className="w-14 h-14 rounded-full bg-sun flex items-center justify-center text-ink text-2xl font-bold leading-none border-2 border-ink">
           +
         </div>
         <div>
-          <div className="text-cream display-xl-tight text-2xl sm:text-3xl">
+          <div className="text-ink display-xl-tight text-2xl sm:text-3xl">
             {loading ? 'READING PHOTO…' : 'DROP YOUR PHOTO HERE'}
           </div>
-          <div className="text-cream/60 text-xs sm:text-sm mt-2 tracking-super font-mono uppercase">
+          <div className="text-ink/60 text-xs sm:text-sm mt-2 tracking-super font-mono uppercase">
             JPG · PNG · HEIC from iPhone
           </div>
         </div>
