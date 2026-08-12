@@ -102,7 +102,7 @@ export function LandingPage({ onGenerate }: Props) {
   }, []);
 
   return (
-    <main className="relative overflow-hidden bg-cream text-ink">
+    <main className="relative overflow-hidden text-cream">
       {/* HERO */}
       <section
         className="relative px-4 sm:px-6 lg:px-10 pt-10 sm:pt-16 lg:pt-20 pb-16 sm:pb-24 poster-stage grain"
@@ -119,15 +119,15 @@ export function LandingPage({ onGenerate }: Props) {
         >
           {/* Kicker */}
           <div className="anim-meta flex items-center justify-center gap-3 mb-8 sm:mb-12">
-            <span className="hidden sm:inline-block w-8 h-px bg-ink/30" />
+            <span className="hidden sm:inline-block w-8 h-px bg-cream/40" />
             <span
-              className="font-mono uppercase text-ink/70 text-[10px] sm:text-[11px] flex items-center gap-2 px-3 py-1 border border-ink/30 rounded-full bg-cream-50/70"
+              className="font-mono uppercase text-cream/90 text-[10px] sm:text-[11px] flex items-center gap-2 px-3 py-1 border border-cream/40 rounded-full bg-ink/30"
               style={{ letterSpacing: '0.25em' }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-pink animate-pulse" />
               GOA · 28—31 OCT 2026 · HYPE INCOMING
             </span>
-            <span className="hidden sm:inline-block w-8 h-px bg-ink/30" />
+            <span className="hidden sm:inline-block w-8 h-px bg-cream/40" />
           </div>
 
           {/* TITLE — HACKER / गोवा stamp / HOUSE */}
@@ -170,14 +170,14 @@ export function LandingPage({ onGenerate }: Props) {
           <div className="anim-meta mt-10 sm:mt-14">
             <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 sm:gap-8">
               <div
-                className="font-mono uppercase text-ink/80 text-xs sm:text-sm"
+                className="font-mono uppercase text-cream text-xs sm:text-sm"
                 style={{ letterSpacing: '0.22em' }}
               >
                 GOA, INDIA · 28—31 OCT 2026
               </div>
               <div className="flex items-center gap-3">
                 <span
-                  className="font-mono uppercase text-ink text-xs sm:text-sm"
+                  className="font-mono uppercase text-sun text-xs sm:text-sm"
                   style={{ letterSpacing: '0.22em' }}
                 >
                   2:47 PM STUDIO
@@ -213,7 +213,7 @@ export function LandingPage({ onGenerate }: Props) {
             </button>
 
             <p
-              className="mt-6 font-mono uppercase text-ink/70 text-[11px] sm:text-xs flex items-center gap-2"
+              className="mt-6 font-mono uppercase text-cream/80 text-[11px] sm:text-xs flex items-center gap-2"
               style={{ letterSpacing: '0.25em' }}
             >
               BUILD YOUR HACKER HOUSE IDENTITY
@@ -223,8 +223,8 @@ export function LandingPage({ onGenerate }: Props) {
         </div>{/* /poster-stage__inner */}
       </section>
 
-      {/* EDITORIAL BRIDGE — cream continues, deep-green typography */}
-      <section className="relative px-4 sm:px-6 lg:px-10 py-16 sm:py-24 bg-cream border-t-2 border-ink/15">
+      {/* EDITORIAL BRIDGE — green continues, cream typography */}
+      <section className="relative px-4 sm:px-6 lg:px-10 py-16 sm:py-24 bg-goa-600 border-t-2 border-ink/40">
         {/* Decorative pink dot at corner */}
         <div className="absolute top-8 right-8 w-4 h-4 rounded-full bg-pink" aria-hidden />
         <div className="mx-auto max-w-5xl">
@@ -240,16 +240,13 @@ export function LandingPage({ onGenerate }: Props) {
                 className="huge-title"
                 style={{
                   fontSize: 'clamp(40px, 9vw, 130px)',
-                  color: '#0E2A1F',
                 }}
               >
                 BUILD YOUR ID.
                 <br />
-                <span style={{ color: '#0E2A1F', textShadow: 'none' }}>
-                  FRAME YOUR CREW.
-                </span>
+                <span>FRAME YOUR CREW.</span>
               </h2>
-              <p className="mt-6 editorial-italic text-ink/80 text-lg sm:text-xl leading-relaxed max-w-2xl">
+              <p className="mt-6 editorial-italic text-cream/90 text-lg sm:text-xl leading-relaxed max-w-2xl">
                 Upload your photo, tell us what you build, and we'll turn
                 it into your Hacker House Goa 2026 identity. Bring up to
                 two teammates and frame the whole crew.
@@ -289,7 +286,7 @@ export function LandingPage({ onGenerate }: Props) {
       </section>
 
       {/* FOOTER */}
-      <footer className="relative px-4 sm:px-6 lg:px-10 py-8 bg-ink text-cream overflow-hidden">
+      <footer className="relative px-4 sm:px-6 lg:px-10 py-8 bg-ink/95 text-cream overflow-hidden border-t-2 border-ink">
         {/* Decorative sun + stripe pattern */}
         <div className="absolute inset-0 opacity-15 pointer-events-none" aria-hidden>
           <div className="absolute top-4 right-4 w-24 h-24 rounded-full bg-sun" />
@@ -317,15 +314,15 @@ export function LandingPage({ onGenerate }: Props) {
 // Small decorative stamp used in the bridge section.
 function Stamp({ n, label }: { n: string; label: string }) {
   return (
-    <div className="rounded-md border-2 border-dashed border-ink/35 p-3 sm:p-4 text-center bg-cream-50/50">
+    <div className="rounded-md border-2 border-dashed border-cream/40 p-3 sm:p-4 text-center bg-ink/20">
       <div
-        className="font-mono uppercase text-ink/60 text-[10px]"
+        className="font-mono uppercase text-cream/70 text-[10px]"
         style={{ letterSpacing: '0.28em' }}
       >
         {n}
       </div>
       <div
-        className="mt-1 huge-title text-ink text-xl sm:text-2xl"
+        className="mt-1 huge-title text-cream text-xl sm:text-2xl"
         style={{ textShadow: '2px 2px 0 #FFD23F' }}
       >
         {label}

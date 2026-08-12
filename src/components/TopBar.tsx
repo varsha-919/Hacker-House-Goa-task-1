@@ -10,7 +10,7 @@ type Props = {
 
 export function TopBar({ onHome }: Props) {
   return (
-    <header className="sticky top-0 z-40 bg-cream/95 backdrop-blur-sm border-b-2 border-ink/15">
+    <header className="sticky top-0 z-40 bg-goa/95 backdrop-blur-sm border-b-2 border-ink/40">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10 h-16 sm:h-20 flex items-center justify-between">
         <button
           type="button"
@@ -33,7 +33,7 @@ export function TopBar({ onHome }: Props) {
           </div>
           <div className="leading-none flex items-center gap-2 sm:gap-3">
             <span
-              className="hidden sm:inline-block text-ink"
+              className="hidden sm:inline-block text-cream"
               style={{
                 fontFamily: 'Anton, Impact, sans-serif',
                 fontSize: 18,
@@ -47,7 +47,7 @@ export function TopBar({ onHome }: Props) {
               aria-hidden
             />
             <span
-              className="text-pink font-mono uppercase"
+              className="text-sun font-mono uppercase"
               style={{
                 fontSize: 11,
                 letterSpacing: '0.22em',
@@ -63,7 +63,7 @@ export function TopBar({ onHome }: Props) {
             href="https://twitter.com/search?q=%23FrameInGoa"
             target="_blank"
             rel="noreferrer"
-            className="hidden sm:inline-flex items-center gap-2 text-ink/70 hover:text-ink font-mono uppercase text-[11px] transition-colors"
+            className="hidden sm:inline-flex items-center gap-2 text-cream/80 hover:text-sun font-mono uppercase text-[11px] transition-colors"
             style={{ letterSpacing: '0.2em' }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-pink animate-pulse" />

@@ -369,38 +369,32 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
+    <div className="min-h-screen flex flex-col">
       <TopBar onHome={goHome} />
 
-      <main id="generator-root" className="flex-1 px-4 sm:px-6 lg:px-8 pb-12 bg-cream">
+      <main id="generator-root" className="flex-1 px-4 sm:px-6 lg:px-8 pb-12">
         <div className="mx-auto max-w-6xl pt-2 sm:pt-4">
           {step === 'input' && (
             <section className="mb-5 sm:mb-7">
               <div className="flex items-center gap-2 mb-3">
-                <span className="pill text-ink/80 border-ink/20">
+                <span className="pill text-cream/90">
                   <span className="w-1.5 h-1.5 rounded-full bg-pink" />
                   HACKER HOUSE · GOA 2026
                 </span>
                 <button
                   type="button"
                   onClick={goHome}
-                  className="ml-auto text-[11px] font-mono uppercase tracking-super text-ink/60 hover:text-pink transition-colors"
+                  className="ml-auto text-[11px] font-mono uppercase tracking-super text-cream/70 hover:text-sun transition-colors"
                 >
                   ← Back to hype
                 </button>
               </div>
-              <h1
-                className="huge-title text-ink"
-                style={{
-                  fontSize: 'clamp(40px, 9vw, 110px)',
-                  textShadow: '3px 3px 0 #FFD23F, 7px 7px 0 rgba(14,42,31,0.18)',
-                }}
-              >
+              <h1 className="huge-title text-[44px] sm:text-7xl md:text-[110px]">
                 BUILD YOUR
                 <br />
-                <span style={{ color: '#0E2A1F' }}>BUILDER ID.</span>
+                <span>BUILDER ID.</span>
               </h1>
-              <p className="mt-4 text-ink/80 text-base sm:text-lg max-w-2xl leading-relaxed">
+              <p className="mt-4 text-cream/90 text-base sm:text-lg max-w-2xl leading-relaxed">
                 Upload your photo, tell us what you build, and we'll turn it into your
                 Hacker House Goa 2026 identity. Bring up to two teammates and frame the
                 whole crew.
@@ -410,14 +404,14 @@ export default function App() {
 
           {step === 'generated' && (
             <div className="mb-5 sm:mb-7 flex items-center gap-2">
-              <span className="pill text-ink/80 border-ink/20">
+              <span className="pill text-cream/90">
                 <span className="w-1.5 h-1.5 rounded-full bg-pink" />
                 {generatedKind === 'team' ? 'CREW FRAME READY' : 'BUILDER ID READY'}
               </span>
               <button
                 type="button"
                 onClick={goHome}
-                className="ml-auto text-[11px] font-mono uppercase tracking-super text-ink/60 hover:text-pink transition-colors"
+                className="ml-auto text-[11px] font-mono uppercase tracking-super text-cream/70 hover:text-sun transition-colors"
               >
                 ← Back to hype
               </button>
@@ -434,7 +428,7 @@ export default function App() {
             <div className={step === 'generated' ? 'lg:col-span-5 order-2 lg:order-1' : 'lg:order-1'}>
               {step === 'input' && (
                 <div className="space-y-5">
-                  <div className="rounded-2xl border-2 border-ink/15 bg-cream-50 p-5">
+                  <div className="rounded-2xl border-2 border-ink/30 bg-cream-50 p-5 shadow-lg shadow-ink/30">
                     <div className="text-[11px] font-mono font-bold uppercase tracking-super text-ink/70 mb-3">
                       01 · Your photo
                     </div>
@@ -469,7 +463,7 @@ export default function App() {
                     )}
                   </div>
 
-                  <div className="rounded-2xl border-2 border-ink/15 bg-cream-50 p-5">
+                  <div className="rounded-2xl border-2 border-ink/30 bg-cream-50 p-5 shadow-lg shadow-ink/30">
                     <div className="text-[11px] font-mono font-bold uppercase tracking-super text-ink/70 mb-3">
                       02 · Your details
                     </div>
@@ -492,7 +486,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border-2 border-ink/15 bg-cream-50 p-5">
+                  <div className="rounded-2xl border-2 border-ink/30 bg-cream-50 p-5 shadow-lg shadow-ink/30">
                     <div className="text-[11px] font-mono font-bold uppercase tracking-super text-ink/70 mb-2">
                       03 · Builder title
                     </div>
@@ -517,7 +511,7 @@ export default function App() {
                   </div>
 
                   {/* Teammates */}
-                  <div className="rounded-2xl border-2 border-ink/15 bg-cream-50 p-5">
+                  <div className="rounded-2xl border-2 border-ink/30 bg-cream-50 p-5 shadow-lg shadow-ink/30">
                     <div className="flex items-center justify-between mb-3">
                       <div className="text-[11px] font-mono font-bold uppercase tracking-super text-ink/70">
                         04 · Bring your crew
@@ -663,7 +657,7 @@ export default function App() {
 
               {step === 'generated' && (
                 <div className="space-y-4">
-                  <div className="rounded-2xl border-2 border-ink/15 bg-cream-50 p-5">
+                  <div className="rounded-2xl border-2 border-ink/30 bg-cream-50 p-5 shadow-lg shadow-ink/30">
                     <div className="text-[11px] font-mono font-bold uppercase tracking-super text-ink/70 mb-2">
                       {generatedKind === 'team' ? 'Your Crew' : 'Your Builder ID'}
                     </div>
@@ -787,13 +781,13 @@ export default function App() {
                         : 'YOUR BUILDER ID'
                       : 'PREVIEW'}
                   </span>
-                  <span className="text-[10px] font-mono uppercase tracking-super text-ink/40">
-                    1080 × 1350 · PNG
-                  </span>
+      <span className="text-[10px] font-mono uppercase tracking-super text-cream/70">
+    1080 × 1350 · PNG
+  </span>
                 </div>
 
                 <div
-                  className="relative rounded-2xl border-2 border-ink/15 bg-cream-50 p-3 sm:p-5 overflow-hidden grain"
+                  className="relative rounded-2xl border-2 border-ink/40 bg-cream-50 p-3 sm:p-5 overflow-hidden grain shadow-xl shadow-ink/40"
                 >
                   <div className="flex items-center justify-center">
                     <div
@@ -819,7 +813,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <p className="text-[11px] text-ink/50 mt-3 text-center leading-relaxed">
+                <p className="text-[11px] text-cream/70 mt-3 text-center leading-relaxed">
                   {slots.length > 1
                     ? 'Photo + builder details + classes baked into one team frame.'
                     : 'Photo + name + stack + builder class + all branding, baked into one image.'}
@@ -830,7 +824,7 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="mt-auto px-4 sm:px-8 py-8 bg-ink text-cream">
+      <footer className="mt-auto px-4 sm:px-8 py-8 bg-ink/95 text-cream border-t-2 border-ink">
         <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-3 text-cream/80 text-xs">
           <div className="flex items-center gap-2">
             <span className="font-mono uppercase tracking-super">

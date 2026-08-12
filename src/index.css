@@ -10,38 +10,35 @@
   }
 
   /* ------------------------------------------------------
-     Page background: cream printed-poster environment.
-
-     Cream `#F5EBD7` is the dominant color of the entire site now.
-     Deep green is reserved for typography + brand accents. The
-     page reads as a physical Goa poster laid on a cream surface,
-     not a dark green SaaS page.
+     Page background: saturated Goa green (#026736) — vintage
+     poster green field with cream typography. Yellow + pink
+     accents pop strongly against this saturated green.
   ------------------------------------------------------ */
   body {
-    @apply text-ink font-body;
-    background-color: #F5EBD7;
+    @apply font-body;
+    background-color: #026736;
     background-image:
       /* subtle paper-grain halftone via two radial gradients */
       radial-gradient(
         circle at 18% 22%,
-        rgba(14, 42, 31, 0.035) 0,
-        rgba(14, 42, 31, 0.035) 1px,
+        rgba(245, 235, 215, 0.06) 0,
+        rgba(245, 235, 215, 0.06) 1px,
         transparent 1.5px,
         transparent 5px
       ),
       radial-gradient(
         circle at 78% 68%,
-        rgba(14, 42, 31, 0.025) 0,
-        rgba(14, 42, 31, 0.025) 1px,
+        rgba(245, 235, 215, 0.05) 0,
+        rgba(245, 235, 215, 0.05) 1px,
         transparent 1.5px,
         transparent 6px
       ),
-      /* very faint paper edges */
-      radial-gradient(ellipse 100% 80% at 50% 50%, #FBF6E8 0%, #F5EBD7 70%, #E9DAB7 100%);
+      /* very faint paper edges — slightly darker toward the edges */
+      radial-gradient(ellipse 100% 80% at 50% 50%, #026736 0%, #026736 70%, #014C28 100%);
     background-size: 22px 22px, 28px 28px, 100% 100%;
     background-attachment: fixed;
     min-height: 100vh;
-    color: #0E2A1F;
+    color: #F5EBD7;
   }
 
   button {
@@ -92,9 +89,9 @@
 
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full
-           border border-ink/30 text-ink
+           border border-cream/40 text-cream
            px-5 py-3 text-sm font-medium
-           transition-colors hover:bg-ink/10;
+           transition-colors hover:bg-cream/10;
   }
 
   .input-field {
@@ -107,12 +104,12 @@
 
   .label-field {
     @apply block text-[11px] font-mono font-bold uppercase
-           tracking-super text-ink/70 mb-2;
+           tracking-super text-cream/80 mb-2;
   }
 
   .pill {
     @apply inline-flex items-center gap-2 rounded-full
-           border border-ink/20 px-3 py-1
+           border border-cream/40 px-3 py-1
            text-[10px] font-mono uppercase tracking-super;
   }
 
@@ -170,31 +167,31 @@
 
 /* ---------------- landing-page additions ---------------- */
 
-/* "Printed poster" title weight. The shadow gives Anton letters a subtle
-   paper-ink feel rather than a flat digital type look. Color is deep
-   green so the title sits strong on cream paper. */
+/* "Printed poster" title weight. The shadow gives Anton letters a
+   subtle paper-ink feel. Cream type on saturated Goa green, with
+   yellow + dark-green layered shadows for the printed-poster look. */
 .huge-title {
   font-family: 'Anton', Impact, sans-serif;
   line-height: 0.85;
   letter-spacing: -0.02em;
   text-transform: uppercase;
-  color: #0E2A1F;
+  color: #F5EBD7;
   text-shadow:
     2px 2px 0 #FFD23F,
-    5px 5px 0 rgba(14, 42, 31, 0.18);
+    5px 5px 0 rgba(0, 0, 0, 0.35);
 }
 
 @media (min-width: 1024px) {
   .huge-title {
     text-shadow:
       3px 3px 0 #FFD23F,
-      7px 7px 0 rgba(14, 42, 31, 0.2);
+      7px 7px 0 rgba(0, 0, 0, 0.4);
   }
 }
 
 /* The pink "गोवा" serif glyph stamped between HACKER and HOUSE.
-   Looks like a rubber stamp pressed onto the cream paper, with
-   layered yellow + green ink offsets for the "double-print" look. */
+   Rubber stamp pressed onto the green poster — pink on yellow on
+   dark-green offset for the "double-print" look. */
 .stamp-glyph {
   font-family: 'Noto Serif Devanagari', 'Fraunces', 'DM Serif Display', Georgia, serif;
   font-style: italic;
@@ -289,7 +286,7 @@
 /* Hand-drawn dotted rule used to separate editorial sections. */
 .dashed-rule {
   height: 0;
-  border-top: 2px dashed rgba(14, 42, 31, 0.25);
+  border-top: 2px dashed rgba(245, 235, 215, 0.45);
 }
 
 /* Paper-grain decorative overlay. Sits on top of the hero scene
@@ -301,12 +298,12 @@
   pointer-events: none;
   background-image: repeating-radial-gradient(
     circle at 30% 40%,
-    rgba(14, 42, 31, 0.04) 0,
-    rgba(14, 42, 31, 0.04) 1px,
+    rgba(245, 235, 215, 0.05) 0,
+    rgba(245, 235, 215, 0.05) 1px,
     transparent 1px,
     transparent 4px
   );
-  mix-blend-mode: multiply;
+  mix-blend-mode: overlay;
   z-index: 1;
 }
 
