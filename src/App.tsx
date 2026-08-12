@@ -1,13 +1,19 @@
 // Hacker House Goa 2026 — Builder ID Generator.
 //
-// Single-flow app: upload a photo -> name + stack -> position
-// photo -> preview -> generate -> download 1080x1350 PNG -> share on X.
+// Flow:
+//   1. Upload a photo, enter name + stack -> "Builder Class" auto-titles.
+//   2. Preview shows the live poster (DOM mirrors canvas exactly).
+//   3. "Generate" rasterizes a 1080x1350 PNG via Canvas and unlocks
+//      download + share-to-X.
+//   4. "Add teammate" lets the user add up to 2 more builders
+//      (max 3 total) and produce a combined team poster.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Header } from './components/Header';
 import { PhotoUploader } from './components/PhotoUploader';
 import { PhotoEditor } from './components/PhotoEditor';
 import { BuilderIDPreview } from './components/BuilderIDPreview';
+import { TeamPreview, type TeamMemberInput } from './components/TeamPreview';
 import { DEFAULT_ADJUST, loadImageFromFile, type LoadedImage, type CropAdjust } from './lib/image';
 import {
   renderBuilderIDToCanvas,
@@ -15,18 +21,30 @@ import {
   downloadDataUrl,
   sanitizeFilename,
 } from './lib/export';
-import { CARD_W, CARD_H } from './lib/builderIdLayout';
+import { renderTeamPosterToCanvas } from './lib/teamExport';
+import { CARD_W, CARD_H } from './lib/posterLayout';
 import { SHARE_TEXT, openXShare, isShareHosted, uploadGeneratedImage, buildShareLink } from './lib/share';
 import { pickTitleVariant, allTitlesForInput } from './lib/builderTitles';
 
 type Step = 'input' | 'generated';
+
+type BuilderSlot = {
+  loaded: LoadedImage | null;
+  adjust: CropAdjust;
+  name: string;
+  stack: string;
+  titleVariant: number;
+};
+
+function emptySlot(): BuilderSlot {
+  return { loaded: null, adjust: DEFAULT_ADJUST, name: '', stack: '', titleVariant: 0 };
+}
 
 function Field({
   label,
   value,
   onChange,
   placeholder,
-  inputMode,
   maxLength,
   hint,
 }: {
@@ -34,7 +52,6 @@ function Field({
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
-  inputMode?: 'text' | 'email' | 'tel' | 'url' | 'numeric' | 'decimal' | 'search';
   maxLength?: number;
   hint?: string;
 }) {
@@ -46,7 +63,6 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        inputMode={inputMode}
         maxLength={maxLength}
         className="input-field"
         autoComplete="off"
@@ -58,46 +74,48 @@ function Field({
 }
 
 export default function App() {
-  const [loaded, setLoaded] = useState<LoadedImage | null>(null);
-  const [adjust, setAdjust] = useState<CropAdjust>(DEFAULT_ADJUST);
-  const [name, setName] = useState('');
-  const [stack, setStack] = useState('');
-  const [titleVariant, setTitleVariant] = useState(0);
+  const [slots, setSlots] = useState<BuilderSlot[]>([emptySlot()]);
   const [loadingImage, setLoadingImage] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
+  const [generatedKind, setGeneratedKind] = useState<'single' | 'team'>('single');
   const [error, setError] = useState<string | null>(null);
   const [uploadingShare, setUploadingShare] = useState(false);
   const [step, setStep] = useState<Step>('input');
+  const [teamName, setTeamName] = useState('BUILDER CREW');
 
   const previewRef = useRef<HTMLDivElement>(null);
 
-  const builderTitle = useMemo(() => pickTitleVariant(stack, titleVariant).title, [stack, titleVariant]);
-  const previewData = useMemo(
-    () => ({
-      name: name || 'Your Name',
-      stackOrRole: stack || 'What do you build?',
-      builderTitle,
-      photo: loaded?.exportSource ?? null,
-      adjust,
-    }),
-    [name, stack, builderTitle, loaded, adjust],
+  // Derived: the active builder (always the first slot while in input step)
+  const active = slots[0];
+
+  // Builder class for the active builder — purely visual (shown in editor)
+  const builderClass = useMemo(
+    () => pickTitleVariant(active.stack, active.titleVariant).title,
+    [active.stack, active.titleVariant],
   );
 
-  // Reset title variant when stack changes
+  // Cycle title when stack changes
   useEffect(() => {
-    setTitleVariant(0);
-  }, [stack]);
+    setSlots((s) => s.map((slot, i) => (i === 0 ? { ...slot, titleVariant: 0 } : slot)));
+  }, [active.stack]);
+
+  const canGenerate = useMemo(() => {
+    return slots.every((s) => s.loaded && s.name.trim() && s.stack.trim());
+  }, [slots]);
+
+  // ------------ handlers ------------
 
   const handleFile = useCallback(async (file: File) => {
     setLoadingImage(true);
     setError(null);
-    setGeneratedUrl(null);
-    setStep('input');
     try {
       const img = await loadImageFromFile(file);
-      setLoaded(img);
-      setAdjust(DEFAULT_ADJUST);
+      setSlots((s) => {
+        const copy = [...s];
+        copy[0] = { ...copy[0], loaded: img, adjust: DEFAULT_ADJUST };
+        return copy;
+      });
     } catch (e: any) {
       setError(humanError(e?.message || 'Could not load that photo.'));
     } finally {
@@ -105,59 +123,148 @@ export default function App() {
     }
   }, []);
 
+  const handleTeammateFile = useCallback(async (idx: number, file: File) => {
+    setLoadingImage(true);
+    setError(null);
+    try {
+      const img = await loadImageFromFile(file);
+      setSlots((s) => {
+        const copy = [...s];
+        copy[idx] = { ...copy[idx], loaded: img, adjust: DEFAULT_ADJUST };
+        return copy;
+      });
+    } catch (e: any) {
+      setError(humanError(e?.message || 'Could not load that photo.'));
+    } finally {
+      setLoadingImage(false);
+    }
+  }, []);
+
+  const updateActiveAdjust = useCallback((a: CropAdjust) => {
+    setSlots((s) => {
+      const copy = [...s];
+      copy[0] = { ...copy[0], adjust: a };
+      return copy;
+    });
+  }, []);
+
+  const setActiveName = useCallback((v: string) => {
+    setSlots((s) => {
+      const copy = [...s];
+      copy[0] = { ...copy[0], name: v };
+      return copy;
+    });
+  }, []);
+
+  const setActiveStack = useCallback((v: string) => {
+    setSlots((s) => {
+      const copy = [...s];
+      copy[0] = { ...copy[0], stack: v };
+      return copy;
+    });
+  }, []);
+
+  const setTeammateName = useCallback((idx: number, v: string) => {
+    setSlots((s) => {
+      const copy = [...s];
+      copy[idx] = { ...copy[idx], name: v };
+      return copy;
+    });
+  }, []);
+
+  const setTeammateStack = useCallback((idx: number, v: string) => {
+    setSlots((s) => {
+      const copy = [...s];
+      copy[idx] = { ...copy[idx], stack: v };
+      return copy;
+    });
+  }, []);
+
+  const updateTeammateAdjust = useCallback((idx: number, a: CropAdjust) => {
+    setSlots((s) => {
+      const copy = [...s];
+      copy[idx] = { ...copy[idx], adjust: a };
+      return copy;
+    });
+  }, []);
+
+  const handleRetryTitle = useCallback(() => {
+    setSlots((s) => {
+      const copy = [...s];
+      const list = allTitlesForInput(copy[0].stack);
+      copy[0] = { ...copy[0], titleVariant: (copy[0].titleVariant + 1) % list.length };
+      return copy;
+    });
+  }, []);
+
+  // ------------ generate / download / share ------------
+
+  const ensureFontsReady = useCallback(async () => {
+    try {
+      if ((document as any).fonts?.ready) {
+        await (document as any).fonts.ready;
+      }
+    } catch {
+      /* ignore */
+    }
+    // tiny RAF wait so layout settles
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+  }, []);
+
   const handleGenerate = useCallback(async () => {
-    if (!loaded) {
-      setError('Upload a photo first.');
-      return;
-    }
-    if (!name.trim()) {
-      setError('Tell us your name.');
-      return;
-    }
-    if (!stack.trim()) {
-      setError('Tell us what you build.');
+    if (!canGenerate) {
+      setError('Upload photos, names and stacks for every builder first.');
       return;
     }
     setGenerating(true);
     setError(null);
     try {
-      // Fonts settle before raster so the canvas text matches the preview
-      try {
-        if ((document as any).fonts?.ready) {
-          await (document as any).fonts.ready;
-        }
-      } catch {
-        /* ignore */
-      }
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      await ensureFontsReady();
 
-      const canvas = renderBuilderIDToCanvas({
-        name: name.trim(),
-        stackOrRole: stack.trim(),
-        builderTitle,
-        photo: loaded.exportSource,
-        adjust,
-      });
-      const dataUrl = canvasToPngDataUrl(canvas);
-      setGeneratedUrl(dataUrl);
+      if (slots.length === 1) {
+        const slot = slots[0];
+        const canvas = renderBuilderIDToCanvas({
+          name: slot.name.trim(),
+          stackOrRole: slot.stack.trim(),
+          builderClass,
+          photo: slot.loaded!.exportSource,
+          adjust: slot.adjust,
+        });
+        const dataUrl = canvasToPngDataUrl(canvas);
+        setGeneratedUrl(dataUrl);
+        setGeneratedKind('single');
+      } else {
+        const members: TeamMemberInput[] = slots.map((s) => ({
+          name: s.name.trim(),
+          stackOrRole: s.stack.trim(),
+          builderClass: pickTitleVariant(s.stack, 0).title,
+          photo: s.loaded!.exportSource,
+          adjust: s.adjust,
+        }));
+        const canvas = renderTeamPosterToCanvas({
+          teamName: teamName.trim() || 'BUILDER CREW',
+          members,
+        });
+        const dataUrl = canvasToPngDataUrl(canvas);
+        setGeneratedUrl(dataUrl);
+        setGeneratedKind('team');
+      }
       setStep('generated');
-
-      if (typeof window !== 'undefined' && window.location.search.includes('__test=1')) {
-        (window as any).__generatedPng = dataUrl;
-      }
     } catch (e: any) {
       console.error(e);
       setError(humanError(e?.message || 'Could not generate the image.'));
     } finally {
       setGenerating(false);
     }
-  }, [loaded, name, stack, builderTitle, adjust]);
+  }, [canGenerate, slots, builderClass, teamName, ensureFontsReady]);
 
   const handleDownload = useCallback(() => {
     if (!generatedUrl) return;
-    const slug = sanitizeFilename(name || 'builder-id');
-    downloadDataUrl(generatedUrl, `hh-goa-2026-${slug}.png`);
-  }, [generatedUrl, name]);
+    const baseName = generatedKind === 'team' ? teamName || 'builder-crew' : slots[0].name || 'builder-id';
+    const slug = sanitizeFilename(baseName);
+    const suffix = generatedKind === 'team' ? 'team' : 'id';
+    downloadDataUrl(generatedUrl, `hh-goa-2026-${slug}-${suffix}.png`);
+  }, [generatedUrl, generatedKind, teamName, slots]);
 
   const handleShare = useCallback(async () => {
     if (!generatedUrl) return;
@@ -180,27 +287,25 @@ export default function App() {
     }
   }, [generatedUrl]);
 
-  const handleEdit = useCallback(() => {
-    setStep('input');
-  }, []);
+  const handleEdit = useCallback(() => setStep('input'), []);
 
   const handleReset = useCallback(() => {
-    setLoaded(null);
-    setAdjust(DEFAULT_ADJUST);
-    setName('');
-    setStack('');
-    setTitleVariant(0);
+    setSlots([emptySlot()]);
+    setTeamName('BUILDER CREW');
     setGeneratedUrl(null);
     setError(null);
     setStep('input');
   }, []);
 
-  const handleRetryTitle = useCallback(() => {
-    const list = allTitlesForInput(stack);
-    setTitleVariant((v) => (v + 1) % list.length);
-  }, [stack]);
+  const handleAddTeammate = useCallback(() => {
+    setSlots((s) => (s.length >= 3 ? s : [...s, emptySlot()]));
+  }, []);
 
-  const canGenerate = !!loaded && !!name.trim() && !!stack.trim();
+  const handleRemoveTeammate = useCallback((idx: number) => {
+    setSlots((s) => s.filter((_, i) => i !== idx));
+  }, []);
+
+  // ------------ render ------------
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -208,13 +313,12 @@ export default function App() {
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 pb-12">
         <div className="mx-auto max-w-6xl pt-2 sm:pt-4">
-          {/* Hero */}
           {step === 'input' && (
             <section className="mb-5 sm:mb-7">
               <div className="flex items-center gap-2 mb-3">
                 <span className="pill text-cream/80 border-cream/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-pink" />
-                  THE ROAD TO 247
+                  HACKER HOUSE · GOA 2026
                 </span>
               </div>
               <h1 className="display-xl text-cream text-[44px] leading-[0.92] sm:text-7xl md:text-[88px]">
@@ -223,20 +327,20 @@ export default function App() {
                 <span className="text-sun">BUILDER ID.</span>
               </h1>
               <p className="mt-4 text-cream/70 text-base sm:text-lg max-w-2xl leading-relaxed">
-                Upload your photo. Tell us what you build. We'll turn it into your
-                Hacker House Goa 2026 identity.
+                Upload your photo, tell us what you build, and we'll turn it into your
+                Hacker House Goa 2026 identity. Bring up to two teammates and frame the
+                whole crew.
               </p>
             </section>
           )}
 
-          {/* Two-column layout on lg+, stacked on mobile */}
           <div
             className={[
               'grid grid-cols-1 gap-6 lg:gap-10',
               step === 'generated' ? 'lg:grid-cols-12' : 'lg:grid-cols-2',
             ].join(' ')}
           >
-            {/* Left column — form */}
+            {/* LEFT: form */}
             <div className={step === 'generated' ? 'lg:col-span-5 order-2 lg:order-1' : 'lg:order-1'}>
               {step === 'input' && (
                 <div className="space-y-5">
@@ -244,7 +348,7 @@ export default function App() {
                     <div className="text-[11px] font-mono font-bold uppercase tracking-super text-cream/60 mb-3">
                       01 · Your photo
                     </div>
-                    {!loaded ? (
+                    {!active.loaded ? (
                       <PhotoUploader
                         onFile={handleFile}
                         onError={(m) => setError(m)}
@@ -254,7 +358,7 @@ export default function App() {
                       <div className="space-y-3">
                         <div className="relative rounded-xl overflow-hidden border border-cream/20">
                           <img
-                            src={loaded.image.src}
+                            src={active.loaded.image.src}
                             alt="Uploaded preview"
                             className="block w-full h-auto"
                           />
@@ -263,13 +367,13 @@ export default function App() {
                             onClick={handleReset}
                             className="absolute top-2 right-2 px-3 py-1.5 rounded-full bg-ink/90 text-cream text-[11px] font-mono uppercase tracking-super border border-cream/20 hover:bg-ink"
                           >
-                            ↻ New photo
+                            ↻ Start over
                           </button>
                         </div>
                         <PhotoEditor
-                          adjust={adjust}
-                          onChange={setAdjust}
-                          onReset={() => setAdjust(DEFAULT_ADJUST)}
+                          adjust={active.adjust}
+                          onChange={updateActiveAdjust}
+                          onReset={() => updateActiveAdjust(DEFAULT_ADJUST)}
                         />
                       </div>
                     )}
@@ -282,15 +386,15 @@ export default function App() {
                     <div className="space-y-4">
                       <Field
                         label="Name"
-                        value={name}
-                        onChange={setName}
+                        value={active.name}
+                        onChange={setActiveName}
                         placeholder="Your name"
                         maxLength={32}
                       />
                       <Field
                         label="Stack / Role"
-                        value={stack}
-                        onChange={setStack}
+                        value={active.stack}
+                        onChange={setActiveStack}
                         placeholder="What do you build?"
                         maxLength={48}
                         hint="e.g. Full Stack Developer, AI/ML Engineer"
@@ -306,7 +410,7 @@ export default function App() {
                       className="display-xl-tight text-3xl sm:text-4xl text-pink"
                       style={{ letterSpacing: '-0.01em' }}
                     >
-                      {builderTitle}
+                      {builderClass}
                     </div>
                     <div className="mt-3 flex items-center gap-3">
                       <button
@@ -320,6 +424,102 @@ export default function App() {
                         Auto-matched from stack
                       </span>
                     </div>
+                  </div>
+
+                  {/* Teammates */}
+                  <div className="rounded-2xl border border-cream/15 bg-ink-900/40 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-[11px] font-mono font-bold uppercase tracking-super text-cream/60">
+                        04 · Bring your crew
+                      </div>
+                      <div className="text-[10px] font-mono uppercase tracking-super text-cream/40">
+                        {slots.length}/3 builders
+                      </div>
+                    </div>
+
+                    {slots.slice(1).map((slot, i) => {
+                      const idx = i + 1;
+                      return (
+                        <div key={idx} className="rounded-xl border border-cream/10 p-3 mb-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-[10px] font-mono uppercase tracking-super text-cream/50">
+                              BUILDER {String(idx + 1).padStart(2, '0')}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTeammate(idx)}
+                              className="text-[10px] font-mono uppercase tracking-super text-cream/50 hover:text-pink"
+                            >
+                              ✕ Remove
+                            </button>
+                          </div>
+                          {!slot.loaded ? (
+                            <TeammateUploader
+                              loading={loadingImage}
+                              onFile={(f) => handleTeammateFile(idx, f)}
+                            />
+                          ) : (
+                            <div className="space-y-3">
+                              <div className="relative rounded-lg overflow-hidden border border-cream/20">
+                                <img
+                                  src={slot.loaded.image.src}
+                                  alt={`Teammate ${idx + 1}`}
+                                  className="block w-full h-auto"
+                                />
+                              </div>
+                              <PhotoEditor
+                                adjust={slot.adjust}
+                                onChange={(a) => updateTeammateAdjust(idx, a)}
+                                onReset={() => updateTeammateAdjust(idx, DEFAULT_ADJUST)}
+                              />
+                            </div>
+                          )}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                            <input
+                              type="text"
+                              value={slot.name}
+                              onChange={(e) => setTeammateName(idx, e.target.value)}
+                              placeholder="Name"
+                              maxLength={32}
+                              className="input-field text-sm"
+                            />
+                            <input
+                              type="text"
+                              value={slot.stack}
+                              onChange={(e) => setTeammateStack(idx, e.target.value)}
+                              placeholder="Stack / role"
+                              maxLength={48}
+                              className="input-field text-sm"
+                            />
+                          </div>
+                          {slots.length > 1 && (
+                            <div className="mt-3">
+                              <div className="text-[10px] font-mono uppercase tracking-super text-cream/40 mb-1">
+                                Team name
+                              </div>
+                              <input
+                                type="text"
+                                value={teamName}
+                                onChange={(e) => setTeamName(e.target.value)}
+                                placeholder="Builder Crew"
+                                maxLength={40}
+                                className="input-field text-sm"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {slots.length < 3 && (
+                      <button
+                        type="button"
+                        onClick={handleAddTeammate}
+                        className="w-full mt-1 rounded-xl border border-dashed border-cream/30 py-3 text-cream/80 hover:text-sun hover:border-sun text-sm font-mono uppercase tracking-super transition-colors"
+                      >
+                        + Add teammate ({3 - slots.length} left)
+                      </button>
+                    )}
                   </div>
 
                   {error && (
@@ -343,11 +543,11 @@ export default function App() {
                     {generating ? (
                       <>
                         <span className="w-4 h-4 rounded-full border-2 border-ink/40 border-t-ink animate-spin" />
-                        BUILDING YOUR ID…
+                        {slots.length > 1 ? 'FRAMING YOUR CREW…' : 'BUILDING YOUR ID…'}
                       </>
                     ) : (
                       <>
-                        GENERATE MY BUILDER ID
+                        {slots.length > 1 ? 'GENERATE TEAM FRAME' : 'GENERATE MY BUILDER ID'}
                         <svg
                           width="20"
                           height="20"
@@ -365,7 +565,7 @@ export default function App() {
                   </button>
                   {!canGenerate && !error && (
                     <p className="text-[11px] text-cream/40 text-center -mt-2 font-mono uppercase tracking-super">
-                      Upload a photo and fill in your details to continue
+                      Fill out every builder to continue
                     </p>
                   )}
                 </div>
@@ -375,20 +575,45 @@ export default function App() {
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-cream/15 bg-ink-900/40 p-5">
                     <div className="text-[11px] font-mono font-bold uppercase tracking-super text-cream/60 mb-2">
-                      Your Builder ID
+                      {generatedKind === 'team' ? 'Your Crew' : 'Your Builder ID'}
                     </div>
-                    <div
-                      className="display-xl-tight text-3xl sm:text-4xl text-sun"
-                      style={{ letterSpacing: '-0.01em' }}
-                    >
-                      {name.toUpperCase()}
-                    </div>
-                    <div className="mt-1 text-cream/70 text-sm font-mono uppercase tracking-super">
-                      {stack.toUpperCase()}
-                    </div>
-                    <div className="mt-4 text-pink display-xl-tight text-2xl">
-                      {builderTitle}
-                    </div>
+                    {generatedKind === 'team' ? (
+                      <div>
+                        <div className="display-xl-tight text-3xl sm:text-4xl text-sun">
+                          {teamName.toUpperCase()}
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          {slots.map((s, i) => {
+                            const klass = pickTitleVariant(s.stack, 0).title;
+                            return (
+                              <div key={i} className="flex items-center justify-between text-sm">
+                                <div className="text-cream font-mono uppercase tracking-super">
+                                  {s.name.toUpperCase()} · {s.stack.toUpperCase()}
+                                </div>
+                                <div className="text-pink font-mono uppercase tracking-super text-xs">
+                                  {klass}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div
+                          className="display-xl-tight text-3xl sm:text-4xl text-sun"
+                          style={{ letterSpacing: '-0.01em' }}
+                        >
+                          {active.name.toUpperCase()}
+                        </div>
+                        <div className="mt-1 text-cream/70 text-sm font-mono uppercase tracking-super">
+                          {active.stack.toUpperCase()}
+                        </div>
+                        <div className="mt-4 text-pink display-xl-tight text-2xl">
+                          {builderClass}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <button
@@ -397,10 +622,19 @@ export default function App() {
                     className="btn-primary w-full text-lg py-4"
                     disabled={!generatedUrl}
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
                     </svg>
-                    DOWNLOAD ID
+                    DOWNLOAD {generatedKind === 'team' ? 'TEAM FRAME' : 'ID'}
                   </button>
 
                   <button
@@ -434,7 +668,10 @@ export default function App() {
                   </div>
 
                   {error && (
-                    <div role="alert" className="rounded-xl border border-pink/40 bg-pink/10 p-4 text-sm text-cream">
+                    <div
+                      role="alert"
+                      className="rounded-xl border border-pink/40 bg-pink/10 p-4 text-sm text-cream"
+                    >
                       <div className="font-mono text-[10px] uppercase tracking-super text-pink mb-1">
                         Heads up
                       </div>
@@ -449,12 +686,16 @@ export default function App() {
               )}
             </div>
 
-            {/* Right column — preview */}
+            {/* RIGHT: preview */}
             <div className={step === 'generated' ? 'lg:col-span-7 order-1 lg:order-2' : 'lg:order-2'}>
               <div className="lg:sticky lg:top-6">
                 <div className="mb-3 flex items-center justify-between">
                   <span className="pill text-cream/70 border-cream/15">
-                    {step === 'generated' ? 'YOUR BUILDER ID' : 'PREVIEW'}
+                    {step === 'generated'
+                      ? generatedKind === 'team'
+                        ? 'TEAM FRAME'
+                        : 'YOUR BUILDER ID'
+                      : 'PREVIEW'}
                   </span>
                   <span className="text-[10px] font-mono uppercase tracking-super text-cream/40">
                     1080 × 1350 · PNG
@@ -470,19 +711,43 @@ export default function App() {
                       }}
                     >
                       <ScaledPreview>
-                        <BuilderIDPreview
-                          ref={previewRef}
-                          data={previewData}
-                          size={CARD_W}
-                          className="w-full h-full"
-                        />
+                        {generatedKind === 'team' || slots.length > 1 ? (
+                          <TeamPreview
+                            ref={previewRef}
+                            teamName={teamName}
+                            members={slots.map((s) => ({
+                              name: s.name || (slots[0] === s ? 'YOUR NAME' : `BUILDER ${slots.indexOf(s) + 1}`),
+                              stackOrRole: s.stack || 'BUILDER',
+                              builderClass: pickTitleVariant(s.stack, s.titleVariant).title,
+                              photo: s.loaded?.exportSource ?? null,
+                              adjust: s.adjust,
+                            }))}
+                            size={CARD_W}
+                            className="w-full h-full"
+                          />
+                        ) : (
+                          <BuilderIDPreview
+                            ref={previewRef}
+                            data={{
+                              name: active.name || 'YOUR NAME',
+                              stackOrRole: active.stack || 'BUILDER',
+                              builderTitle: builderClass,
+                              photo: active.loaded?.exportSource ?? null,
+                              adjust: active.adjust,
+                            }}
+                            size={CARD_W}
+                            className="w-full h-full"
+                          />
+                        )}
                       </ScaledPreview>
                     </div>
                   </div>
                 </div>
 
                 <p className="text-[11px] text-cream/40 mt-3 text-center leading-relaxed">
-                  Photo + name + stack + builder title + all branding, baked into one image.
+                  {slots.length > 1
+                    ? 'Photo + builder details + classes baked into one team frame.'
+                    : 'Photo + name + stack + builder class + all branding, baked into one image.'}
                 </p>
               </div>
             </div>
@@ -498,7 +763,7 @@ export default function App() {
             </span>
           </div>
           <div className="font-mono uppercase tracking-super">
-            The road to 247 · 28—31 Oct 2026
+            Build · Ship · Repeat · 28—31 Oct 2026
           </div>
         </div>
       </footer>
@@ -506,8 +771,31 @@ export default function App() {
   );
 }
 
-// Renders children at full export resolution while scaling the CSS so
-// preview and export share the same DOM positioning.
+// Tiny teammate uploader — just a button.
+function TeammateUploader({ loading, onFile }: { loading: boolean; onFile: (f: File) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <button
+      type="button"
+      onClick={() => inputRef.current?.click()}
+      disabled={loading}
+      className="w-full rounded-xl border border-dashed border-cream/25 bg-ink-900/40 py-4 text-cream/70 hover:text-sun hover:border-sun text-sm font-mono uppercase tracking-super"
+    >
+      + Drop teammate photo
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onFile(f);
+        }}
+      />
+    </button>
+  );
+}
+
 function ScaledPreview({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);

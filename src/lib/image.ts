@@ -160,7 +160,9 @@ export type CropAdjust = {
   offsetY: number;   // -1..1, vertical (positive = shift down)
 };
 
-export const DEFAULT_ADJUST: CropAdjust = { scale: 1, offsetX: 0, offsetY: 0 };
+// Tighter default crop: scale 1.15 so faces fill the circle cleanly without
+// manual zoom. Users can still drag the slider down to 1.0 for a wider crop.
+export const DEFAULT_ADJUST: CropAdjust = { scale: 1.15, offsetX: 0, offsetY: 0 };
 
 export type CoverRect = {
   sx: number; sy: number; sw: number; sh: number;

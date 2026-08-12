@@ -123,4 +123,21 @@
       linear-gradient(90deg, rgba(245, 235, 215, 0.05) 1px, transparent 1px);
     background-size: 28px 28px;
   }
+
+  .editorial-italic {
+    font-family: 'Fraunces', 'DM Serif Display', Georgia, serif;
+    font-style: italic;
+    font-weight: 600;
+  }
+}
+
+/* Small-screen refinements: tighter hero, scaled preview, padding. */
+@media (max-width: 640px) {
+  .input-field {
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+  main {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
 }
