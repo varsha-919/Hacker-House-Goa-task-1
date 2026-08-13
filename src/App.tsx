@@ -232,9 +232,9 @@ export default function App() {
               <span>BUILDER PHOTOS.</span>
             </h1>
             <p className="mt-4 text-cream/90 text-base sm:text-lg max-w-2xl leading-relaxed">
-              Upload photos for up to 3 teammates. We'll print each one
-              into the official Hacker House Goa 2026 builder card and
-              bundle all three PNGs into a single ZIP.
+              Upload photos for up to 3 teammates. We'll print each one into the
+              official Hacker House Goa 2026 builder card and bundle all three
+              PNGs into a single ZIP.
             </p>
           </section>
 
@@ -330,7 +330,7 @@ export default function App() {
                   )}
                 </button>
                 {!allPhotosLoaded && !error && (
-                  <p className="text-[11px] text-ink/40 text-white text-center -mt-2 font-mono uppercase tracking-super">
+                  <p className="text-[11px] text-cream/70 hover:text-cream text-center -mt-2 font-mono uppercase tracking-super">
                     Upload all 3 photos to generate
                   </p>
                 )}
@@ -341,10 +341,10 @@ export default function App() {
             <div className="lg:order-2">
               <div className="lg:sticky lg:top-6">
                 <div className="mb-3 flex items-center justify-between gap-2">
-                  <span className="pill text-ink/80 border-ink/20">
+                  <span className="pill text-cream/70 hover:text-cream border-ink/20">
                     {activeSlot.photoImage
-                      ? `TEAMMATE ${activePreview + 1} · ${activeSlot.name || 'YOUR FRAME'}`
-                      : 'OFFICIAL CARD'}
+                      ? `TEAMMATE ${activePreview + 1} · ${activeSlot.name || "YOUR FRAME"}`
+                      : "OFFICIAL CARD"}
                   </span>
                   <span className="text-[10px] font-mono uppercase tracking-super text-cream/70">
                     1684 × 2528 · PNG
@@ -365,14 +365,16 @@ export default function App() {
                       aria-selected={activePreview === idx}
                       onClick={() => setActivePreview(idx as 0 | 1 | 2)}
                       className={[
-                        'flex-1 rounded-full px-3 py-1.5 text-[11px] font-mono uppercase tracking-super transition-colors',
+                        "flex-1 rounded-full px-3 py-1.5 text-[11px] font-mono uppercase tracking-super transition-colors",
                         activePreview === idx
-                          ? 'bg-sun text-ink border-2 border-ink'
-                          : 'text-cream/70 hover:text-cream',
-                      ].join(' ')}
+                          ? "bg-sun text-ink border-2 border-ink"
+                          : "text-cream/70 hover:text-cream",
+                      ].join(" ")}
                     >
-                      {slots[idx].photoImage ? '●' : '○'} 0{idx + 1}
-                      {slots[idx].name ? ` · ${slots[idx].name.split(' ')[0]}` : ''}
+                      {slots[idx].photoImage ? "●" : "○"} 0{idx + 1}
+                      {slots[idx].name
+                        ? ` · ${slots[idx].name.split(" ")[0]}`
+                        : ""}
                     </button>
                   ))}
                 </div>
@@ -381,8 +383,8 @@ export default function App() {
                   <div className="flex items-center justify-center">
                     <div
                       style={{
-                        width: 'min(100%, 460px)',
-                        aspectRatio: '1684 / 2528',
+                        width: "min(100%, 460px)",
+                        aspectRatio: "1684 / 2528",
                       }}
                     >
                       <CardPreview
