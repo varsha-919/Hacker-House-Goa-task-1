@@ -330,7 +330,7 @@ export default function App() {
                   )}
                 </button>
                 {!allPhotosLoaded && !error && (
-                  <p className="text-[11px] text-ink/40 text-center -mt-2 font-mono uppercase tracking-super">
+                  <p className="text-[11px] text-ink/40 text-white text-center -mt-2 font-mono uppercase tracking-super">
                     Upload all 3 photos to generate
                   </p>
                 )}
