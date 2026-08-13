@@ -104,7 +104,7 @@
 
   .label-field {
     @apply block text-[11px] font-mono font-bold uppercase
-           tracking-super text-cream/80 mb-2;
+           tracking-super text-ink/80 mb-2;
   }
 
   .pill {
@@ -267,6 +267,10 @@
   padding: 0.5rem 0.95rem;
   border-radius: 3px;
   border: 2px solid #FF2D7B;
+  position: relative;
+  z-index: 20;
+  cursor: pointer;
+  pointer-events: auto;
   box-shadow:
     inset 0 0 0 2px #FFD23F,
     inset 0 0 0 3px #0E2A1F,
@@ -396,6 +400,14 @@
 
 /* Ticket CTA gets a tiny lift on its own plane. */
 .ticket-btn {
+  /* Explicit position + z-index so the button always sits above the
+     R3F canvas, the grain overlay, and any other decorative layers.
+     The translateZ lift is purely cosmetic (parallax depth) — the
+     z-index is what guarantees the click target is on top. */
+  position: relative;
+  z-index: 20;
+  cursor: pointer;
+  pointer-events: auto;
   transform: rotate(-1.5deg) translateZ(30px);
   transition:
     transform 180ms ease-out,
@@ -454,4 +466,10 @@
   width: 100% !important;
   height: 100% !important;
   background: transparent !important;
+  /* Critical: never let the WebGL canvas intercept clicks. Without
+     this, some browsers will swallow pointer events even though the
+     host has pointer-events:none (e.g. when the canvas is rendered
+     as a non-transparent texture). */
+  pointer-events: none !important;
+  touch-action: none;
 }

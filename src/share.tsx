@@ -36,8 +36,8 @@ function SharePage() {
       setMeta('og:image', imgParam, 'property');
       setMeta('og:image:secure_url', imgParam, 'property');
       setMeta('og:image:type', 'image/png', 'property');
-      setMeta('og:image:width', '1080', 'property');
-      setMeta('og:image:height', '1350', 'property');
+      setMeta('og:image:width', '1684', 'property');
+      setMeta('og:image:height', '2528', 'property');
       setMeta('og:title', 'Hacker House Goa 2026 · Builder ID', 'property');
       setMeta('og:description', CAPTION, 'property');
       setMeta('twitter:title', 'Hacker House Goa 2026 · Builder ID', 'name');

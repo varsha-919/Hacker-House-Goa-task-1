@@ -1,23 +1,3 @@
-// Hacker House Goa 2026 landing page.
-//
-// Composed of three sections, all presented as a cream printed poster
-// with deep-green typography and brand accents:
-//
-//   1. Hero — huge stacked title (HACKER / [pink "गोवा" Devanagari stamp]
-//      / HOUSE) sits on a cream paper surface. Behind the typography a
-//      layered R3F Goa scene: hills, sunset sun, ocean, palms, Goan
-//      house, scooter, surfboards, and a 3D collectible Goa builder
-//      frame card centered in the composition.
-//
-//   2. Editorial bridge — "BUILD YOUR ID. FRAME YOUR CREW." with copy,
-//      a sticker-style CTA, and a small row of decorative stamps. Reads
-//      as part of the cream poster, not a separate dark section.
-//
-//   3. Footer band — flat cream with deep-green type and a pink accent
-//      stripe.
-//
-// Visual feel: an interactive 3D Goa poster. Cream paper, deep-green
-// type, yellow sun + scooter + frame highlights, hot pink stamp.
 
 import React, { Suspense, useEffect, useRef } from 'react';
 import { HeroScene } from '../three/HeroScene';
@@ -29,17 +9,7 @@ type Props = {
 export function LandingPage({ onGenerate }: Props) {
   const stageRef = useRef<HTMLDivElement | null>(null);
 
-  // Subtle cursor parallax on the entire hero poster plane.
-  // JS writes --rx / --ry CSS variables onto .poster-stage__inner; the
-  // CSS layer translates those into actual rotateX/rotateY. The R3F
-  // scene reads those values via getComputedStyle inside each
-  // individual mesh's useFrame loop — so each element applies its
-  // own multiplier (see src/three/constants.ts) and the layering
-  // separates visually.
-  //
-  // Motion is clamped to ±5deg total so the page feels alive without
-  // seasickness. Reduced-motion users skip this entirely (CSS rule
-  // + early return).
+
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
@@ -106,12 +76,13 @@ export function LandingPage({ onGenerate }: Props) {
       {/* HERO */}
       <section
         className="relative px-4 sm:px-6 lg:px-10 pt-10 sm:pt-16 lg:pt-20 pb-16 sm:pb-24 poster-stage grain"
-        style={{ minHeight: 'min(900px, 100vh)' }}
+        style={{ minHeight: "min(900px, 100vh)" }}
       >
-        {/* R3F Goa scene behind the typography. */}
-        <Suspense fallback={null}>
-          <HeroScene />
-        </Suspense>
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <Suspense fallback={null}>
+            <HeroScene />
+          </Suspense>
+        </div>
 
         <div
           ref={stageRef}
@@ -122,7 +93,7 @@ export function LandingPage({ onGenerate }: Props) {
             <span className="hidden sm:inline-block w-8 h-px bg-cream/40" />
             <span
               className="font-mono uppercase text-cream/90 text-[10px] sm:text-[11px] flex items-center gap-2 px-3 py-1 border border-cream/40 rounded-full bg-ink/30"
-              style={{ letterSpacing: '0.25em' }}
+              style={{ letterSpacing: "0.25em" }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-pink animate-pulse" />
               GOA · 28—31 OCT 2026 · HYPE INCOMING
@@ -130,13 +101,12 @@ export function LandingPage({ onGenerate }: Props) {
             <span className="hidden sm:inline-block w-8 h-px bg-cream/40" />
           </div>
 
-          {/* TITLE — HACKER / गोवा stamp / HOUSE */}
           <div className="mx-auto max-w-[1400px]">
             <h1 className="text-center select-none">
               <span
                 className="huge-title block anim-hero-1"
                 style={{
-                  fontSize: 'clamp(72px, 18vw, 280px)',
+                  fontSize: "clamp(72px, 18vw, 280px)",
                 }}
               >
                 HACKER
@@ -148,7 +118,7 @@ export function LandingPage({ onGenerate }: Props) {
               >
                 <span
                   className="stamp-glyph"
-                  style={{ fontSize: 'clamp(60px, 14vw, 220px)' }}
+                  style={{ fontSize: "clamp(60px, 14vw, 220px)" }}
                   aria-label="गोवा (Goa)"
                 >
                   गोवा
@@ -158,7 +128,7 @@ export function LandingPage({ onGenerate }: Props) {
               <span
                 className="huge-title block anim-hero-3"
                 style={{
-                  fontSize: 'clamp(72px, 18vw, 280px)',
+                  fontSize: "clamp(72px, 18vw, 280px)",
                 }}
               >
                 HOUSE
@@ -166,19 +136,18 @@ export function LandingPage({ onGenerate }: Props) {
             </h1>
           </div>
 
-          {/* Date / location strip */}
           <div className="anim-meta mt-10 sm:mt-14">
             <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 sm:gap-8">
               <div
                 className="font-mono uppercase text-cream text-xs sm:text-sm"
-                style={{ letterSpacing: '0.22em' }}
+                style={{ letterSpacing: "0.22em" }}
               >
                 GOA, INDIA · 28—31 OCT 2026
               </div>
               <div className="flex items-center gap-3">
                 <span
                   className="font-mono uppercase text-sun text-xs sm:text-sm"
-                  style={{ letterSpacing: '0.22em' }}
+                  style={{ letterSpacing: "0.22em" }}
                 >
                   2:47 PM STUDIO
                 </span>
@@ -188,12 +157,11 @@ export function LandingPage({ onGenerate }: Props) {
             <div className="dashed-rule mt-4 sm:mt-6" />
           </div>
 
-          {/* PRIMARY CTA — physical yellow ticket with pink border */}
           <div className="mt-10 sm:mt-14 flex flex-col items-center anim-cta">
             <button
               type="button"
               onClick={onGenerate}
-              className="ticket-btn text-base sm:text-lg md:text-xl"
+              className="ticket-btn text-base sm:text-lg md:text-xl relative z-20 cursor-pointer pointer-events-auto"
               aria-label="Generate your Hacker House frame"
             >
               GENERATE YOUR FRAME
@@ -214,32 +182,36 @@ export function LandingPage({ onGenerate }: Props) {
 
             <p
               className="mt-6 font-mono uppercase text-cream/80 text-[11px] sm:text-xs flex items-center gap-2"
-              style={{ letterSpacing: '0.25em' }}
+              style={{ letterSpacing: "0.25em" }}
             >
               BUILD YOUR HACKER HOUSE IDENTITY
               <span aria-hidden>→</span>
             </p>
           </div>
-        </div>{/* /poster-stage__inner */}
+        </div>
+        {/* /poster-stage__inner */}
       </section>
 
       {/* EDITORIAL BRIDGE — green continues, cream typography */}
       <section className="relative px-4 sm:px-6 lg:px-10 py-16 sm:py-24 bg-goa-600 border-t-2 border-ink/40">
         {/* Decorative pink dot at corner */}
-        <div className="absolute top-8 right-8 w-4 h-4 rounded-full bg-pink" aria-hidden />
+        <div
+          className="absolute top-8 right-8 w-4 h-4 rounded-full bg-pink"
+          aria-hidden
+        />
         <div className="mx-auto max-w-5xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-end">
             <div className="lg:col-span-8">
               <p
                 className="font-mono uppercase text-pink text-[10px] sm:text-[11px] mb-4"
-                style={{ letterSpacing: '0.3em' }}
+                style={{ letterSpacing: "0.3em" }}
               >
                 ◐ FRAME IN GOA · 247 BUILDERS
               </p>
               <h2
                 className="huge-title"
                 style={{
-                  fontSize: 'clamp(40px, 9vw, 130px)',
+                  fontSize: "clamp(40px, 9vw, 130px)",
                 }}
               >
                 BUILD YOUR ID.
@@ -247,9 +219,9 @@ export function LandingPage({ onGenerate }: Props) {
                 <span>FRAME YOUR CREW.</span>
               </h2>
               <p className="mt-6 editorial-italic text-cream/90 text-lg sm:text-xl leading-relaxed max-w-2xl">
-                Upload your photo, tell us what you build, and we'll turn
-                it into your Hacker House Goa 2026 identity. Bring up to
-                two teammates and frame the whole crew.
+                Upload your photo, tell us what you build, and we'll turn it
+                into your Hacker House Goa 2026 identity. Bring up to two
+                teammates and frame the whole crew.
               </p>
             </div>
             <div className="lg:col-span-4 flex lg:justify-end">
@@ -275,8 +247,6 @@ export function LandingPage({ onGenerate }: Props) {
               </button>
             </div>
           </div>
-
-          {/* Three decorative dashed-border stamps */}
           <div className="mt-14 sm:mt-20 grid grid-cols-3 gap-3 sm:gap-6 max-w-3xl">
             <Stamp n="01" label="PHOTO" />
             <Stamp n="02" label="DETAILS" />
@@ -285,23 +255,24 @@ export function LandingPage({ onGenerate }: Props) {
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="relative px-4 sm:px-6 lg:px-10 py-8 bg-ink/95 text-cream overflow-hidden border-t-2 border-ink">
-        {/* Decorative sun + stripe pattern */}
-        <div className="absolute inset-0 opacity-15 pointer-events-none" aria-hidden>
+        <div
+          className="absolute inset-0 opacity-15 pointer-events-none"
+          aria-hidden
+        >
           <div className="absolute top-4 right-4 w-24 h-24 rounded-full bg-sun" />
           <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-pink" />
         </div>
         <div className="relative mx-auto max-w-[1400px] flex flex-col sm:flex-row items-center justify-between gap-3 text-cream/90">
           <div
             className="font-mono uppercase"
-            style={{ letterSpacing: '0.22em' }}
+            style={{ letterSpacing: "0.22em" }}
           >
             HACKER HOUSE GOA · 2026
           </div>
           <div
             className="font-mono uppercase text-sun"
-            style={{ letterSpacing: '0.22em' }}
+            style={{ letterSpacing: "0.22em" }}
           >
             BUILD · SHIP · REPEAT · 28—31 OCT 2026
           </div>
