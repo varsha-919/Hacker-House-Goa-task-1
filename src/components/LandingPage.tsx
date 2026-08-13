@@ -1,4 +1,5 @@
 
+
 import React, { Suspense, useEffect, useRef } from 'react';
 import { HeroScene } from '../three/HeroScene';
 
@@ -78,11 +79,9 @@ export function LandingPage({ onGenerate }: Props) {
         className="relative px-4 sm:px-6 lg:px-10 pt-10 sm:pt-16 lg:pt-20 pb-16 sm:pb-24 poster-stage grain"
         style={{ minHeight: "min(900px, 100vh)" }}
       >
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-          <Suspense fallback={null}>
-            <HeroScene />
-          </Suspense>
-        </div>
+        <Suspense fallback={null}>
+          <HeroScene />
+        </Suspense>
 
         <div
           ref={stageRef}
@@ -135,61 +134,65 @@ export function LandingPage({ onGenerate }: Props) {
               </span>
             </h1>
           </div>
-
-          <div className="anim-meta mt-10 sm:mt-14">
-            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 sm:gap-8">
-              <div
-                className="font-mono uppercase text-cream text-xs sm:text-sm"
-                style={{ letterSpacing: "0.22em" }}
-              >
-                GOA, INDIA · 28—31 OCT 2026
-              </div>
-              <div className="flex items-center gap-3">
-                <span
-                  className="font-mono uppercase text-sun text-xs sm:text-sm"
-                  style={{ letterSpacing: "0.22em" }}
-                >
-                  2:47 PM STUDIO
-                </span>
-                <span className="w-2 h-2 rounded-full bg-pink animate-pulse" />
-              </div>
-            </div>
-            <div className="dashed-rule mt-4 sm:mt-6" />
-          </div>
-
-          <div className="mt-10 sm:mt-14 flex flex-col items-center anim-cta">
-            <button
-              type="button"
-              onClick={onGenerate}
-              className="ticket-btn text-base sm:text-lg md:text-xl relative z-20 cursor-pointer pointer-events-auto"
-              aria-label="Generate your Hacker House frame"
-            >
-              GENERATE YOUR FRAME
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </button>
-
-            <p
-              className="mt-6 font-mono uppercase text-cream/80 text-[11px] sm:text-xs flex items-center gap-2"
-              style={{ letterSpacing: "0.25em" }}
-            >
-              BUILD YOUR HACKER HOUSE IDENTITY
-              <span aria-hidden>→</span>
-            </p>
-          </div>
         </div>
         {/* /poster-stage__inner */}
+      </section>
+      <section
+        className="relative px-4 sm:px-6 lg:px-10  poster-stage grain"
+        style={{ minHeight: "min(400px" }}
+      >
+        <div className="anim-meta mt-10 sm:mt-14">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 sm:gap-8">
+            <div
+              className="font-mono uppercase text-cream text-xs sm:text-sm"
+              style={{ letterSpacing: "0.22em" }}
+            >
+              GOA, INDIA · 28—31 OCT 2026
+            </div>
+            <div className="flex items-center gap-3">
+              <span
+                className="font-mono uppercase text-sun text-xs sm:text-sm"
+                style={{ letterSpacing: "0.22em" }}
+              >
+                2:47 PM STUDIO
+              </span>
+              <span className="w-2 h-2 rounded-full bg-pink animate-pulse" />
+            </div>
+          </div>
+          <div className="dashed-rule mt-4 sm:mt-6" />
+        </div>
+
+        <div className="mt-10 sm:mt-14 flex flex-col items-center anim-cta">
+          <button
+            type="button"
+            onClick={onGenerate}
+            className="ticket-btn text-base sm:text-lg md:text-xl"
+            aria-label="Generate your Hacker House frame"
+          >
+            GENERATE YOUR FRAME
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <p
+            className="mt-6 font-mono uppercase text-cream/80 text-[11px] sm:text-xs flex items-center gap-2"
+            style={{ letterSpacing: "0.25em" }}
+          >
+            BUILD YOUR HACKER HOUSE IDENTITY
+            <span aria-hidden>→</span>
+          </p>
+        </div>
       </section>
 
       {/* EDITORIAL BRIDGE — green continues, cream typography */}
